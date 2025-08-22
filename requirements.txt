@@ -1,0 +1,9 @@
+# requirements.txt
+streamlit
+transformers
+torch
+scikit-learn
+nltk
+matplotlib
+PyPDF2
+python-docx
