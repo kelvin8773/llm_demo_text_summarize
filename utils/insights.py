@@ -2,9 +2,39 @@
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
+import spacy
 
-# import numpy as np
+
+# Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
+nlp = spacy.load("en_core_web_sm")
+
+# Expand the default stopwords to include domain-generic terms
+CUSTOM_STOPWORDS = list(ENGLISH_STOP_WORDS.union({
+    "business", "use", "using", "user", "real", "area", "data", "information"
+}))
+
+def extract_keywords_phrases(text, top_n=10):
+    # Step 1: Extract candidate phrases (noun chunks)
+    doc = nlp(text)
+    candidates = set()
+    for chunk in doc.noun_chunks:
+        phrase = chunk.text.strip().lower()
+        if phrase not in CUSTOM_STOPWORDS and len(phrase) > 2:
+            candidates.add(phrase)
+
+    # Step 2: Run TF-IDF on the candidate phrases only
+    vectorizer = TfidfVectorizer(stop_words=CUSTOM_STOPWORDS, ngram_range=(1, 3))
+    tfidf = vectorizer.fit_transform([text])
+    scores = zip(vectorizer.get_feature_names_out(), tfidf.toarray()[0])
+
+    # Step 3: Keep only scores where the term appears in candidates
+    filtered_scores = [(term, score) for term, score in scores if term in candidates]
+
+    # Step 4: Sort by score
+    sorted_scores = sorted(filtered_scores, key=lambda x: x[1], reverse=True)
+
+    return [term for term, score in sorted_scores[:top_n]]
 
 
 def extract_keywords(text, top_n=10):
@@ -47,25 +77,3 @@ def plot_keywords(keywords):
     ax.set_ylabel("Keywords")
     return fig
 
-
-# # Flatten to DataFrame
-#     df = pd.DataFrame(
-#         [(cluster_id, kw) for cluster_id, kws in clusters.items() for kw in kws],
-#         columns=["Cluster", "Keyword"]
-#     )
-
-#     # Group by cluster and join keywords for labels
-#     cluster_keywords = df.groupby("Cluster")["Keyword"].apply(lambda kws: ", ".join(kws)).reset_index()
-#     cluster_counts = df.groupby("Cluster").size().reset_index(name="Count")
-#     cluster_counts["Keywords"] = cluster_keywords["Keyword"]
-
-#     # Bar chart: count of keywords per cluster, show keywords as text
-#     fig = px.bar(
-#         cluster_counts,
-#         x="Cluster",
-#         y="Count",
-#         title="Keyword Count per Cluster",
-#         text="Keywords"  # Show keywords as bar labels
-#     )
-#     fig.update_traces(textposition='outside', cliponaxis=False)
-#     st.plotly_chart(fig)
