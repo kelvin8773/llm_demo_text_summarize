@@ -10,3 +10,4 @@ python-docx
 black
 spacy
 jieba
+en-core-web-sm
