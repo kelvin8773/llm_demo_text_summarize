@@ -1,11 +1,10 @@
-# utils/summarize.py
 from typing import List
 import re
 from transformers import pipeline, AutoTokenizer
 
 # Choose one model:
-# - "google/pegasus-xsum"  -> ultra-concise, headline-like, very natural phrasing
-# - "facebook/bart-large-cnn" -> balanced, slightly longer, robust
+# - "google/pegasus-xsum"  -> ultra-concise, headline-like
+# - "facebook/bart-large-cnn" -> balanced, slightly longer
 MODEL_NAME = "google/pegasus-xsum"
 
 _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
@@ -16,13 +15,11 @@ _summarizer = pipeline(
 
 
 def _split_sentences(text: str) -> List[str]:
-    # Lightweight sentence splitter to avoid NLTK downloads
     sentences = re.split(r"(?<=[\.\!\?])\s+", text.strip())
-    return [s for s in sentences if s]
+    return [s for s in sentences if s.strip()]
 
 
 def _chunk_by_tokens(text: str, max_tokens: int) -> List[str]:
-    # Pack sentences into chunks that respect the model's max input length
     sents = _split_sentences(text)
     chunks, current, cur_len = [], [], 0
     for s in sents:
@@ -35,7 +32,8 @@ def _chunk_by_tokens(text: str, max_tokens: int) -> List[str]:
             cur_len += tok_len
     if current:
         chunks.append(" ".join(current))
-    return chunks
+    # Strip blanks just in case
+    return [c.strip() for c in chunks if c.strip()]
 
 
 def summarize_text(
@@ -49,7 +47,7 @@ def summarize_text(
     # Prepare decoding presets
     if mode == "concise_natural":
         gen_kwargs = dict(
-            max_length=min(4 * target_words, 120),  # rough token heuristic
+            max_length=min(4 * target_words, 120),
             min_length=max(int(1.2 * target_words), 20),
             do_sample=True,
             top_p=0.9,
@@ -67,30 +65,41 @@ def summarize_text(
             repetition_penalty=1.1,
         )
 
-    # Chunk the input and summarize each chunk in one pass
+    # 🔹 Split into safe chunks
     chunks = _chunk_by_tokens(
         text, max_tokens=MAX_IN_TOKENS - 32
     )  # margin for specials
+    if not chunks:
+        return ""
+
     partials = []
     for ch in chunks:
+        token_len = len(_tokenizer.encode(ch, add_special_tokens=False))
+        if token_len < gen_kwargs["min_length"]:
+            continue  # skip too-short chunks
         out = _summarizer(ch, **gen_kwargs)[0]["summary_text"].strip()
-        partials.append(out)
+        if out:
+            partials.append(out)
 
-    # If there are multiple partials, do a short "collate" pass with the SAME model
-    # Still a single pipeline; this just fuses chunk summaries into a final brief summary.
-    combined = " ".join(partials)
-    final = _summarizer(
-        combined,
-        max_length=min(4 * target_words, 120),
-        min_length=max(int(1.0 * target_words), 20),
-        do_sample=gen_kwargs.get("do_sample", False),
-        top_p=gen_kwargs.get("top_p", None),
-        temperature=gen_kwargs.get("temperature", None),
-        num_beams=gen_kwargs.get("num_beams", 4),
-        length_penalty=1.0,
-        repetition_penalty=1.1,
-    )[0]["summary_text"].strip()
+    if not partials:
+        return ""
 
-    # Light cleanup so it reads cleanly
-    final = re.sub(r"\s+", " ", final)
-    return final
+    # 🔹 Collate pass if needed
+    if len(partials) == 1:
+        final = partials[0]
+    else:
+        combined = " ".join(partials)
+        final = _summarizer(
+            combined,
+            max_length=min(4 * target_words, 120),
+            min_length=max(int(1.0 * target_words), 20),
+            do_sample=gen_kwargs.get("do_sample", False),
+            top_p=gen_kwargs.get("top_p", None),
+            temperature=gen_kwargs.get("temperature", None),
+            num_beams=gen_kwargs.get("num_beams", 4),
+            length_penalty=1.0,
+            repetition_penalty=1.1,
+        )[0]["summary_text"].strip()
+
+    # Light cleanup
+    return re.sub(r"\s+", " ", final)
