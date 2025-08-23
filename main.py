@@ -16,9 +16,9 @@ if uploaded_file:
     st.write(raw_text[:500] + "...")
 
     # 2. Summarize
-    old_summary = summarize_text(raw_text, max_chunk=500)
-    st.subheader("Summary (Old Method)")
-    st.write(old_summary)
+    # old_summary = summarize_text(raw_text, max_chunk=500)
+    # st.subheader("Summary (Old Method)")
+    # st.write(old_summary)
 
     # New summarization method
     new_summary = new_summarize_text(raw_text, max_sentences=8)
