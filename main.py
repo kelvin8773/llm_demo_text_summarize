@@ -9,7 +9,7 @@ from utils.insights import (
     extract_keywords,
     extract_keywords_phrases,
     plot_keywords,
-    plot_chinese_keywords
+    plot_chinese_keywords,
 )
 from utils.chinese_insights import extract_chinese_keywords
 from utils.parameters import (
@@ -33,7 +33,9 @@ with col3:
     if language == "Chinese":
         mode = None
     else:
-        mode = st.selectbox("Summarize Mode", ["Fast Summarizer", "Enhanced Summarizer"])
+        mode = st.selectbox(
+            "Summarize Mode", ["Fast Summarizer", "Enhanced Summarizer"]
+        )
 
 with col4:
     if mode == "Fast Summarizer":
@@ -55,17 +57,19 @@ if use_sample:
         if language == "Chinese":
             summary = chinese_summarize_text(raw_text, max_sentences)
             keywords = extract_chinese_keywords(raw_text, top_n=15)
-        else:    
+        else:
             if mode == "Fast Summarizer":
                 summary = fast_summarize_text(raw_text, max_sentences, model_name=model)
                 keywords = extract_keywords(raw_text, top_n=15)
             else:
                 summary = enhance_summarize_text(raw_text, max_sentences)
                 keywords = extract_keywords_phrases(raw_text, top_n=15)
-    
+
     st.info("Showing built-in sample. Upload a file to process live.")
 else:
-    input_mode = st.radio("Input Method", ["Upload File", "Paste Text"], horizontal=True)
+    input_mode = st.radio(
+        "Input Method", ["Upload File", "Paste Text"], horizontal=True
+    )
 
     if input_mode == "Paste Text":
         raw_text = st.text_area("Paste your document text here:", height=300)

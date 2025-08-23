@@ -18,6 +18,7 @@ CUSTOM_STOPWORDS = list(
     )
 )
 
+
 def extract_keywords_phrases(text, top_n=10):
     # Step 1: Extract candidate phrases (noun chunks)
     doc = nlp(text)
@@ -56,6 +57,7 @@ def plot_keywords(keywords):
     ax.set_xlabel("Importance (ranked)")
     ax.set_ylabel("Keywords")
     return fig
+
 
 def plot_chinese_keywords(keywords):
     fig, ax = plt.subplots()
