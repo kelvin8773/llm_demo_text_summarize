@@ -1,10 +1,7 @@
 # utils/insights.py
 import matplotlib.pyplot as plt
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 import spacy
-
 
 # Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
 nlp = spacy.load("en_core_web_sm")
@@ -15,7 +12,6 @@ CUSTOM_STOPWORDS = list(
         {"business", "use", "using", "user", "real", "area", "data", "information"}
     )
 )
-
 
 def extract_keywords_phrases(text, top_n=10):
     # Step 1: Extract candidate phrases (noun chunks)
@@ -46,30 +42,6 @@ def extract_keywords(text, top_n=10):
     scores = zip(vectorizer.get_feature_names_out(), tfidf.toarray()[0])
     sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
     return [word for word, score in sorted_scores[:top_n]]
-
-
-def cluster_keywords(keywords, n_clusters=3):
-    vectorizer = TfidfVectorizer()
-    X = vectorizer.fit_transform(keywords)
-    km = KMeans(n_clusters=n_clusters, random_state=42).fit(X)
-    clusters = {}
-    for keyword, label in zip(keywords, km.labels_):
-        # Force label to be a built-in Python int
-        clusters.setdefault(int(label), []).append(keyword)
-    clusters = {int(k): v for k, v in clusters.items()}
-    return clusters
-
-
-def plot_cuslters(clusters):
-    # Simple bar chart
-    fig, ax = plt.subplots()
-    cluster_ids = list(clusters.keys())
-    counts = [len(v) for v in clusters.values()]
-    ax.bar(cluster_ids, counts)
-    ax.set_xlabel("Cluster ID")
-    ax.set_ylabel("Number of Keywords")
-    ax.set_title("Keyword Clusters")
-    return fig
 
 
 def plot_keywords(keywords):

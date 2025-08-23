@@ -1,5 +1,5 @@
 from transformers import pipeline
-from .parameters import BART_CNN_MODEL, GOOGLE_MODEL, FALCONSAI_MODEL, MRM_MODEL
+from .parameters import BART_CNN_MODEL
 
 
 def summarize_text(text, max_sentences=10, model_name=BART_CNN_MODEL):
