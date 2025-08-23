@@ -101,6 +101,7 @@ st.write(summary)
 st.subheader("Top Keywords")
 st.write(keywords)
 
+st.subheader("Keywords Importance")
 if language == "Chinese":
     fig = plot_chinese_keywords(keywords)
 else:

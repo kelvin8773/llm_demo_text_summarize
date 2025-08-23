@@ -7,6 +7,3 @@ CHINESE_MODEL = "uer/bart-base-chinese-cluecorpussmall"
 GOOGLE_MODEL = "google/pegasus-large"
 FALCONSAI_MODEL = "Falconsai/Text-Summarization"
 MRM_MODEL = "mrm8488/t5-base-finetuned-summarize-news"
-
-
-
