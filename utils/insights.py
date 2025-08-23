@@ -3,9 +3,19 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 import spacy
+import os
+import requests
 
-# Pick a system font that supports Chinese
-zh_font = fm.FontProperties(fname="./data/NotoSansSC-Regular.otf")
+# Download font if not already cached
+font_url = "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
+font_path = "/tmp/NotoSansCJKsc-Regular.otf"
+
+if not os.path.exists(font_path):
+    r = requests.get(font_url)
+    with open(font_path, "wb") as f:
+        f.write(r.content)
+
+zh_font = fm.FontProperties(fname=font_path)
 
 # Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
 nlp = spacy.load("en_core_web_sm")
