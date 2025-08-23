@@ -14,7 +14,6 @@ from utils.insights import (
 from utils.chinese_insights import extract_chinese_keywords
 from utils.parameters import (
     BART_CNN_MODEL,
-    MRM_MODEL,
     T5_LARGE_MODEL,
 )
 
@@ -40,7 +39,7 @@ with col4:
     if mode == "Fast Summarizer":
         model = st.selectbox(
             "Model",
-            [BART_CNN_MODEL, T5_LARGE_MODEL, MRM_MODEL],
+            [BART_CNN_MODEL, T5_LARGE_MODEL],
         )
     else:
         model = None
