@@ -19,13 +19,12 @@ if uploaded_file:
     old_summary = summarize_text(raw_text, max_chunk=500)
     st.subheader("Summary (Old Method)")
     st.write(old_summary)
-    
+
     # New summarization method
     new_summary = new_summarize_text(raw_text, max_sentences=8)
     st.subheader("Summary (New Method)")
     st.write(new_summary)
-    
-    
+
     # 3. Insights
     keywords = extract_keywords(raw_text, top_n=10)
     st.subheader("Top Keywords")
