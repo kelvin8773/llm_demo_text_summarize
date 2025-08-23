@@ -1,7 +1,12 @@
 # utils/insights.py
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 import spacy
+
+# Pick a system font that supports Chinese
+# On macOS, PingFang SC is a good default
+zh_font = fm.FontProperties(fname="/System/Library/Fonts/Supplemental/Songti.ttc")
 
 # Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
 nlp = spacy.load("en_core_web_sm")
@@ -50,4 +55,15 @@ def plot_keywords(keywords):
     ax.barh(keywords, range(len(keywords), 0, -1))
     ax.set_xlabel("Importance (ranked)")
     ax.set_ylabel("Keywords")
+    return fig
+
+def plot_chinese_keywords(keywords):
+    fig, ax = plt.subplots()
+    ax.barh(keywords, range(len(keywords), 0, -1))
+    ax.set_xlabel("Importance (ranked)")
+    ax.set_ylabel("关键词", fontproperties=zh_font)
+    ax.set_title("关键词权重图", fontproperties=zh_font)
+
+    # Apply font to tick labels
+    ax.set_yticklabels(keywords, fontproperties=zh_font)
     return fig

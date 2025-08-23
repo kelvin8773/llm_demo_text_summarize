@@ -9,6 +9,7 @@ from utils.insights import (
     extract_keywords,
     extract_keywords_phrases,
     plot_keywords,
+    plot_chinese_keywords
 )
 from utils.chinese_insights import extract_chinese_keywords
 from utils.parameters import (
@@ -101,5 +102,9 @@ st.write(summary)
 st.subheader("Top Keywords")
 st.write(keywords)
 
-fig = plot_keywords(keywords)
+if language == "Chinese":
+    fig = plot_chinese_keywords(keywords)
+else:
+    fig = plot_keywords(keywords)
+
 st.pyplot(fig)
