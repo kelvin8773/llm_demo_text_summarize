@@ -8,6 +8,6 @@ matplotlib
 PyPDF2
 python-docx
 black
-spacy
 jieba
-# en_core_web_sm
+spacy
+en-core-web-sm

@@ -5,7 +5,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 import spacy
 
 # Pick a system font that supports Chinese
-# On macOS, PingFang SC is a good default
 zh_font = fm.FontProperties(fname="/System/Library/Fonts/Supplemental/Songti.ttc")
 
 # Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
