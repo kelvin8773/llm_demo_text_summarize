@@ -8,3 +8,5 @@ matplotlib
 PyPDF2
 python-docx
 black
+spacy
+jieba
