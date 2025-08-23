@@ -10,9 +10,12 @@ import spacy
 nlp = spacy.load("en_core_web_sm")
 
 # Expand the default stopwords to include domain-generic terms
-CUSTOM_STOPWORDS = list(ENGLISH_STOP_WORDS.union({
-    "business", "use", "using", "user", "real", "area", "data", "information"
-}))
+CUSTOM_STOPWORDS = list(
+    ENGLISH_STOP_WORDS.union(
+        {"business", "use", "using", "user", "real", "area", "data", "information"}
+    )
+)
+
 
 def extract_keywords_phrases(text, top_n=10):
     # Step 1: Extract candidate phrases (noun chunks)
@@ -76,4 +79,3 @@ def plot_keywords(keywords):
     ax.set_xlabel("Importance (ranked)")
     ax.set_ylabel("Keywords")
     return fig
-

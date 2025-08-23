@@ -1,13 +1,15 @@
 from transformers import pipeline, AutoTokenizer
 import re
+from .parameters import BART_CNN_MODEL
 
-MODEL_NAME = "facebook/bart-large-cnn"
-_tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
+MODEL_NAME = BART_CNN_MODEL
+_tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
 MAX_INPUT_TOKENS = min(_tokenizer.model_max_length, 1024)
 
 _summarizer = pipeline(
     "summarization", model=MODEL_NAME, tokenizer=_tokenizer, device=-1
 )
+
 
 def _split_sentences(text):
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()]
@@ -27,6 +29,7 @@ def _chunk_text(text, max_tokens=MAX_INPUT_TOKENS - 32):
     if current:
         chunks.append(" ".join(current))
     return chunks
+
 
 def _format_markdown(summary_text):
     """

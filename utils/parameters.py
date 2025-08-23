@@ -1,0 +1,5 @@
+GOOGLE_MODEL = "google/pegasus-large"
+T5_LARGE_MODEL = "t5-large"
+BART_CNN_MODEL = "facebook/bart-large-cnn"
+FALCONSAI_MODEL = "Falconsai/Text-Summarization"
+MRM_MODEL = "mrm8488/t5-base-finetuned-summarize-news"

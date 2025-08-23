@@ -1,11 +1,12 @@
 from transformers import pipeline
+from .parameters import BART_CNN_MODEL, GOOGLE_MODEL, FALCONSAI_MODEL, MRM_MODEL
 
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
-def summarize_text(text, max_sentences=10):
-    summary = summarizer(
-        text, max_length=500, min_length=50, do_sample=False  # increased token limits
-    )[0]["summary_text"]
+def summarize_text(text, max_sentences=10, model_name=BART_CNN_MODEL):
+    summarizer = pipeline("summarization", model=model_name)
+    summary = summarizer(text, max_length=300, min_length=60, do_sample=True)[0][
+        "summary_text"
+    ]
 
     # Split into sentences and trim to target
     sentences = [s.strip() for s in summary.split(". ") if s.strip()]

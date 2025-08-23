@@ -9,18 +9,30 @@ from utils.insights import (
     extract_keywords_phrases,
     plot_keywords,
 )
+from utils.parameters import (
+    BART_CNN_MODEL,
+    GOOGLE_MODEL,
+    FALCONSAI_MODEL,
+    MRM_MODEL,
+    T5_LARGE_MODEL,
+)
 
 st.title("📄 Documents Summarizer & Insight Extractor")
 
 # Controls for one-pass summarizer
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     max_sentences = st.slider(
         "Max Summary Sentences", min_value=5, max_value=30, value=10, step=1
     )
 with col2:
     mode = st.selectbox("Summarize Mode", ["Fast Summarizer", "Enhanced Summarizer"])
+with col3:
+    model = st.selectbox(
+        "Model",
+        [GOOGLE_MODEL, BART_CNN_MODEL, T5_LARGE_MODEL, FALCONSAI_MODEL, MRM_MODEL],
+    )
 
 use_sample = st.sidebar.checkbox("Use built-in sample file", value=True)
 
@@ -30,7 +42,7 @@ if use_sample:
 
     with st.spinner("Summarizing..."):
         if mode == "Fast Summarizer":
-            summary = fast_summarize_text(raw_text, max_sentences)
+            summary = fast_summarize_text(raw_text, max_sentences, model_name=model)
             keywords = extract_keywords(raw_text, top_n=15)
         else:
             summary = enhance_summarize_text(raw_text, max_sentences)
@@ -50,7 +62,7 @@ else:
 
     with st.spinner("Summarizing..."):
         if mode == "Fast Summarizer":
-            summary = fast_summarize_text(raw_text, max_sentences)
+            summary = fast_summarize_text(raw_text, max_sentences, model_name=model)
             keywords = extract_keywords(raw_text, top_n=15)
         else:
             summary = enhance_summarize_text(raw_text, max_sentences)
