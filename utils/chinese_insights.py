@@ -52,7 +52,6 @@ CHINESE_STOPWORDS = set(
 # Add your own domain-specific "banned" words here
 CUSTOM_BLOCKLIST = set(["公司", "数据", "业务", "使用"])
 
-
 def jieba_tokenizer(text):
     """Tokenize and filter out stopwords / single chars."""
     tokens = []

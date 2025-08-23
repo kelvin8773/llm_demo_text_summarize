@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 import spacy
 
 # Pick a system font that supports Chinese
-zh_font = fm.FontProperties(fname="/System/Library/Fonts/Supplemental/Songti.ttc")
+zh_font = fm.FontProperties(fname="./data/NotoSansSC-Regular.otf")
 
 # Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
 nlp = spacy.load("en_core_web_sm")
