@@ -2,7 +2,7 @@
 import streamlit as st
 from pathlib import Path
 from utils.ingest import load_document
-from utils.fast_summarize import summarize_text as fast_summarize_text
+from utils.fast_summarize import fast_summarize_text
 from utils.enhance_summarize import enhance_summarize_text
 from utils.chinese_summarize import chinese_summarize_text
 from utils.insights import (
