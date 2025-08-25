@@ -24,7 +24,7 @@ st.title("📄 Documents Summarizer & Insight Extractor")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     max_sentences = st.slider(
-        "Max Summary Sentences", min_value=5, max_value=30, value=10, step=1
+        "Max Summary Sentences", min_value=1, max_value=20, value=5, step=1
     )
 with col2:
     language = st.selectbox("Language", ["English", "Chinese"])
@@ -68,7 +68,7 @@ if use_sample:
     st.info("Showing built-in sample. Upload a file to process live.")
 else:
     input_mode = st.radio(
-        "Input Method", ["Upload File", "Paste Text"], horizontal=True
+        "Input Method", ["Paste Text", "Upload File",], horizontal=True
     )
 
     if input_mode == "Paste Text":
