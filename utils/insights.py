@@ -1,21 +1,8 @@
 # utils/insights.py
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 import spacy
-import os
-import requests
 
-# Download font if not already cached
-font_url = "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
-font_path = "/tmp/NotoSansCJKsc-Regular.otf"
-
-if not os.path.exists(font_path):
-    r = requests.get(font_url)
-    with open(font_path, "wb") as f:
-        f.write(r.content)
-
-zh_font = fm.FontProperties(fname=font_path)
 
 # Load small English model for speed; swap for 'en_core_web_lg' for better accuracy
 nlp = spacy.load("en_core_web_sm")
@@ -65,16 +52,4 @@ def plot_keywords(keywords):
     ax.barh(keywords, range(len(keywords), 0, -1))
     ax.set_xlabel("Importance (ranked)")
     ax.set_ylabel("Keywords")
-    return fig
-
-
-def plot_chinese_keywords(keywords):
-    fig, ax = plt.subplots()
-    ax.barh(keywords, range(len(keywords), 0, -1))
-    ax.set_xlabel("Importance (ranked)")
-    ax.set_ylabel("关键词", fontproperties=zh_font)
-    ax.set_title("关键词权重图", fontproperties=zh_font)
-
-    # Apply font to tick labels
-    ax.set_yticklabels(keywords, fontproperties=zh_font)
     return fig

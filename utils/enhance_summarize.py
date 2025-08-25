@@ -3,6 +3,7 @@ import re
 from .parameters import BART_CNN_MODEL
 
 MODEL_NAME = BART_CNN_MODEL
+
 _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
 MAX_INPUT_TOKENS = min(_tokenizer.model_max_length, 1024)
 

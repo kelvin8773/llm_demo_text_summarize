@@ -9,9 +9,8 @@ from utils.insights import (
     extract_keywords,
     extract_keywords_phrases,
     plot_keywords,
-    plot_chinese_keywords,
 )
-from utils.chinese_insights import extract_chinese_keywords
+from utils.chinese_insights import extract_chinese_keywords, plot_chinese_keywords
 from utils.parameters import (
     BART_CNN_MODEL,
     T5_LARGE_MODEL,
@@ -68,7 +67,12 @@ if use_sample:
     st.info("Showing built-in sample. Upload a file to process live.")
 else:
     input_mode = st.radio(
-        "Input Method", ["Paste Text", "Upload File",], horizontal=True
+        "Input Method",
+        [
+            "Paste Text",
+            "Upload File",
+        ],
+        horizontal=True,
     )
 
     if input_mode == "Paste Text":
