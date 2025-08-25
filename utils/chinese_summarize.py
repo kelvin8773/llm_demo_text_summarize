@@ -1,8 +1,8 @@
 from transformers import pipeline, AutoTokenizer
 import re
+from .parameters import CHINESE_MODEL
 
 # Load model + tokenizer
-CHINESE_MODEL = "uer/bart-base-chinese-cluecorpussmall"
 tokenizer = AutoTokenizer.from_pretrained(CHINESE_MODEL, use_fast=False)
 summarizer = pipeline(
     "summarization",
