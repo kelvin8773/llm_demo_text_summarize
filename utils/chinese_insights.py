@@ -90,7 +90,7 @@ def extract_chinese_keywords(text, top_n=10):
     vectorizer = TfidfVectorizer(
         tokenizer=jieba_tokenizer,
         ngram_range=(1, 2),  # single words + 2-word phrases
-        max_df=1.0,  # ignore terms in >85% of docs (generic)
+        max_df=1.0, 
         min_df=1,
     )
     tfidf = vectorizer.fit_transform([text])

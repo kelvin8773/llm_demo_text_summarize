@@ -3,10 +3,7 @@ from .parameters import BART_CNN_MODEL
 
 
 def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
-    """
-    Summarize text safely by chunking to avoid position embedding overflows.
-    Handles Chinese/English length quirks and performs optional second-pass summarization.
-    """
+    
     # Init tokenizer + pipeline once per session
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     summarizer = pipeline("summarization", model=model_name)
