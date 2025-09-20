@@ -24,72 +24,53 @@ class TestFastSummarizeText:
         self.valid_text = ENGLISH_MEDIUM_TEXT
         self.short_text = ENGLISH_SHORT_TEXT
         self.long_text = ENGLISH_LONG_TEXT
-        
-    def test_valid_input_basic(self):
-        """Test basic functionality with valid input."""
-        with patch('utils.fast_summarize.AutoTokenizer') as mock_tokenizer, \
-             patch('utils.fast_summarize.pipeline') as mock_pipeline:
-            
-            # Mock tokenizer
-            mock_tokenizer_instance = Mock()
-            mock_tokenizer_instance.encode.return_value = [1, 2, 3, 4, 5]
-            mock_tokenizer.from_pretrained.return_value = mock_tokenizer_instance
-            
-            # Mock pipeline
-            mock_pipeline_instance = Mock()
-            mock_pipeline_instance.return_value = [{"summary_text": "This is a test summary."}]
-            mock_pipeline.return_value = mock_pipeline_instance
-            
-            result = fast_summarize_text(self.valid_text, max_sentences=3)
-            
-            assert isinstance(result, str)
-            assert len(result) > 0
-            assert "test summary" in result.lower()
     
-    def test_valid_input_different_models(self):
+    def _setup_mocks(self):
+        """Helper method to set up common mocks for fast_summarize_text tests."""
+        mock_tokenizer_instance = Mock()
+        mock_tokenizer_instance.encode.return_value = [1, 2, 3, 4, 5]
+        
+        mock_summarizer = Mock()
+        mock_summarizer.return_value = [{"summary_text": "This is a test summary."}]
+        
+        return {
+            'mock_tokenizer': mock_tokenizer_instance,
+            'mock_summarizer': mock_summarizer,
+            'mock_chunking': Mock(return_value=["This is a test chunk of text for summarization."])
+        }
+        
+    def test_valid_input_basic(self, mock_fast_summarize):
+        """Test basic functionality with valid input."""
+        result = fast_summarize_text(self.valid_text, max_sentences=3)
+        
+        assert isinstance(result, str)
+        assert len(result) > 0
+        assert "summary" in result.lower()
+    
+    def test_valid_input_different_models(self, mock_fast_summarize):
         """Test with different model configurations."""
         models_to_test = [BART_CNN_MODEL, T5_LARGE_MODEL]
         
         for model in models_to_test:
-            with patch('utils.fast_summarize.AutoTokenizer') as mock_tokenizer, \
-                 patch('utils.fast_summarize.pipeline') as mock_pipeline:
-                
-                # Mock tokenizer
-                mock_tokenizer_instance = Mock()
-                mock_tokenizer_instance.encode.return_value = [1, 2, 3, 4, 5]
-                mock_tokenizer.from_pretrained.return_value = mock_tokenizer_instance
-                
-                # Mock pipeline
-                mock_pipeline_instance = Mock()
-                mock_pipeline_instance.return_value = [{"summary_text": f"Summary for {model}"}]
-                mock_pipeline.return_value = mock_pipeline_instance
-                
-                result = fast_summarize_text(self.valid_text, max_sentences=5, model_name=model)
-                
-                assert isinstance(result, str)
-                assert len(result) > 0
-                assert model in result or "summary" in result.lower()
+            # Update the mock to return model-specific summary
+            mock_fast_summarize['summarizer'].return_value = [{"summary_text": f"Summary for {model}"}]
+            
+            result = fast_summarize_text(self.valid_text, max_sentences=5, model_name=model)
+            
+            assert isinstance(result, str)
+            assert len(result) > 0
+            assert model in result or "summary" in result.lower()
     
-    def test_valid_max_sentences(self):
+    def test_valid_max_sentences(self, mock_fast_summarize):
         """Test with valid max_sentences values."""
         for max_sentences in VALID_MAX_SENTENCES:
-            with patch('utils.fast_summarize.AutoTokenizer') as mock_tokenizer, \
-                 patch('utils.fast_summarize.pipeline') as mock_pipeline:
-                
-                # Mock tokenizer
-                mock_tokenizer_instance = Mock()
-                mock_tokenizer_instance.encode.return_value = [1, 2, 3, 4, 5]
-                mock_tokenizer.from_pretrained.return_value = mock_tokenizer_instance
-                
-                # Mock pipeline
-                mock_pipeline_instance = Mock()
-                mock_pipeline_instance.return_value = [{"summary_text": "This is a test summary with multiple sentences. It contains several key points. The summary is comprehensive and informative."}]
-                mock_pipeline.return_value = mock_pipeline_instance
-                
-                result = fast_summarize_text(self.valid_text, max_sentences=max_sentences)
-                
-                assert isinstance(result, str)
-                assert len(result) > 0
+            # Update mock to return multi-sentence summary
+            mock_fast_summarize['summarizer'].return_value = [{"summary_text": "This is a test summary with multiple sentences. It contains several key points. The summary is comprehensive and informative."}]
+            
+            result = fast_summarize_text(self.valid_text, max_sentences=max_sentences)
+            
+            assert isinstance(result, str)
+            assert len(result) > 0
     
     def test_empty_text_raises_error(self):
         """Test that empty text raises ValueError."""

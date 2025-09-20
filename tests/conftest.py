@@ -87,6 +87,33 @@ def temp_directory():
 
 
 @pytest.fixture
+def mock_fast_summarize():
+    """Mock fast_summarize components with proper function mocking."""
+    with patch('utils.fast_summarize._load_tokenizer') as mock_load_tokenizer, \
+         patch('utils.fast_summarize._load_summarizer') as mock_load_summarizer, \
+         patch('utils.fast_summarize.optimize_text_chunking') as mock_chunking:
+        
+        # Configure mock tokenizer
+        mock_tokenizer_instance = Mock()
+        mock_tokenizer_instance.encode.return_value = [1, 2, 3, 4, 5]
+        mock_load_tokenizer.return_value = mock_tokenizer_instance
+        
+        # Configure mock summarizer
+        mock_summarizer_instance = Mock()
+        mock_summarizer_instance.return_value = [{"summary_text": "Mock summary result."}]
+        mock_load_summarizer.return_value = mock_summarizer_instance
+        
+        # Configure mock chunking
+        mock_chunking.return_value = ["This is a test chunk of text for summarization."]
+        
+        yield {
+            "tokenizer": mock_tokenizer_instance,
+            "summarizer": mock_summarizer_instance,
+            "chunking": mock_chunking
+        }
+
+
+@pytest.fixture
 def mock_transformers():
     """Mock transformers library components."""
     with patch('utils.fast_summarize.AutoTokenizer') as mock_tokenizer, \
