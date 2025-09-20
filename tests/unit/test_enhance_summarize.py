@@ -231,22 +231,12 @@ class TestEnhanceSummarizeText:
         self.short_text = ENGLISH_SHORT_TEXT
         self.long_text = ENGLISH_LONG_TEXT
     
-    def test_basic_functionality(self):
+    def test_basic_functionality(self, mock_enhance_summarize):
         """Test basic enhanced summarization functionality."""
-        with patch('utils.enhance_summarize._initialize_models'), \
-             patch('utils.enhance_summarize._tokenizer') as mock_tokenizer, \
-             patch('utils.enhance_summarize._summarizer') as mock_summarizer:
-            
-            # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
-            
-            # Mock summarizer
-            mock_summarizer.return_value = [{"summary_text": "Enhanced summary result."}]
-            
-            result = enhance_summarize_text(self.valid_text, max_sentences=5)
-            
-            assert isinstance(result, str)
-            assert len(result) > 0
+        result = enhance_summarize_text(self.valid_text, max_sentences=5)
+        
+        assert isinstance(result, str)
+        assert len(result) > 0
     
     def test_markdown_formatting(self):
         """Test that result is properly formatted as markdown."""

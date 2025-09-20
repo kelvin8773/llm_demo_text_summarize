@@ -1,6 +1,7 @@
 from transformers import pipeline, AutoTokenizer
 import re
 import logging
+import torch
 from typing import List, Optional
 from .parameters import BART_CNN_MODEL
 from .performance import (
@@ -11,6 +12,10 @@ from .performance import (
 )
 
 logger = logging.getLogger(__name__)
+
+# GPU configuration
+DEVICE = 0 if torch.cuda.is_available() else -1
+GPU_AVAILABLE = torch.cuda.is_available()
 
 # Configuration constants
 MODEL_NAME = BART_CNN_MODEL
@@ -38,10 +43,16 @@ def _initialize_tokenizer() -> AutoTokenizer:
 @cached_model_loader(lambda: "enhance_summarizer")
 @performance_timer("initialize_enhance_summarizer")
 def _initialize_summarizer() -> pipeline:
-    """Initialize summarizer with caching."""
-    logger.info(f"Initializing enhanced summarizer: {MODEL_NAME}")
+    """Initialize summarizer with caching and GPU support."""
+    logger.info(f"Initializing enhanced summarizer: {MODEL_NAME} (device: {DEVICE})")
     tokenizer = _initialize_tokenizer()
-    return pipeline("summarization", model=MODEL_NAME, tokenizer=tokenizer, device=-1)
+    return pipeline(
+        "summarization", 
+        model=MODEL_NAME, 
+        tokenizer=tokenizer, 
+        device=DEVICE,
+        torch_dtype=torch.float16 if GPU_AVAILABLE else torch.float32
+    )
 
 
 def _initialize_models() -> None:

@@ -1,6 +1,7 @@
 from transformers import pipeline, AutoTokenizer
 import re
 import logging
+import torch
 from typing import List, Optional
 from .parameters import CHINESE_MODEL
 from .performance import (
@@ -11,6 +12,10 @@ from .performance import (
 )
 
 logger = logging.getLogger(__name__)
+
+# GPU configuration
+DEVICE = 0 if torch.cuda.is_available() else -1
+GPU_AVAILABLE = torch.cuda.is_available()
 
 # Configuration constants
 MODEL_NAME = CHINESE_MODEL
@@ -34,14 +39,15 @@ def _initialize_chinese_tokenizer() -> AutoTokenizer:
 @cached_model_loader(lambda: "chinese_summarizer")
 @performance_timer("initialize_chinese_summarizer")
 def _initialize_chinese_summarizer() -> pipeline:
-    """Initialize Chinese summarizer with caching."""
-    logger.info(f"Initializing Chinese summarizer: {MODEL_NAME}")
+    """Initialize Chinese summarizer with caching and GPU support."""
+    logger.info(f"Initializing Chinese summarizer: {MODEL_NAME} (device: {DEVICE})")
     tokenizer = _initialize_chinese_tokenizer()
     return pipeline(
         "summarization",
         model=MODEL_NAME,
         tokenizer=tokenizer,
-        device=-1,  # use CPU; change to 0 for GPU
+        device=DEVICE,
+        torch_dtype=torch.float16 if GPU_AVAILABLE else torch.float32
     )
 
 

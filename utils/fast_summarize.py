@@ -1,5 +1,8 @@
 from transformers import pipeline, AutoTokenizer
 import logging
+import concurrent.futures
+import torch
+from typing import List, Dict, Any
 from .parameters import BART_CNN_MODEL
 from .performance import (
     cached_model_loader,
@@ -9,6 +12,39 @@ from .performance import (
 )
 
 logger = logging.getLogger(__name__)
+
+# GPU configuration
+DEVICE = 0 if torch.cuda.is_available() else -1
+GPU_AVAILABLE = torch.cuda.is_available()
+
+if GPU_AVAILABLE:
+    logger.info(f"GPU acceleration enabled: {torch.cuda.get_device_name(0)}")
+else:
+    logger.info("GPU not available, using CPU")
+
+
+def _process_chunk_parallel(args: tuple) -> Dict[str, Any]:
+    """Process a single chunk in parallel."""
+    chunk, chunk_index, summarizer = args
+    
+    try:
+        if len(chunk.strip()) < 10:
+            return {"index": chunk_index, "success": False, "reason": "too_short"}
+        
+        result = summarizer(chunk, max_length=150, min_length=30, truncation=True)
+        
+        if result and len(result) > 0 and "summary_text" in result[0]:
+            summary_text = result[0]["summary_text"].strip()
+            if summary_text:
+                return {"index": chunk_index, "success": True, "summary": summary_text}
+            else:
+                return {"index": chunk_index, "success": False, "reason": "empty_summary"}
+        else:
+            return {"index": chunk_index, "success": False, "reason": "no_summary"}
+            
+    except Exception as e:
+        logger.error(f"Error summarizing chunk {chunk_index + 1}: {str(e)}")
+        return {"index": chunk_index, "success": False, "reason": "error", "error": str(e)}
 
 
 @performance_timer("fast_summarize_text")
@@ -65,28 +101,30 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
         if not chunks:
             raise ValueError("Text could not be processed into chunks")
 
-        partials = []
-        for i, ch in enumerate(chunks):
-            try:
-                if len(ch.strip()) < 10:
-                    logger.warning(f"Skipping chunk {i+1} - too short")
-                    continue
-
-                result = summarizer(ch, max_length=150, min_length=30, truncation=True)
-
-                if result and len(result) > 0 and "summary_text" in result[0]:
-                    summary_text = result[0]["summary_text"].strip()
-                    if summary_text:
-                        partials.append(summary_text)
+        # Process chunks in parallel for better performance
+        logger.info(f"Processing {len(chunks)} chunks in parallel")
+        
+        # Prepare arguments for parallel processing
+        chunk_args = [(chunk, i, summarizer) for i, chunk in enumerate(chunks)]
+        
+        # Use ThreadPoolExecutor for parallel processing
+        # Note: Using threads instead of processes to avoid model serialization issues
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, len(chunks))) as executor:
+            future_to_chunk = {executor.submit(_process_chunk_parallel, args): args[1] 
+                             for args in chunk_args}
+            
+            partials = []
+            for future in concurrent.futures.as_completed(future_to_chunk):
+                chunk_index = future_to_chunk[future]
+                try:
+                    result = future.result()
+                    if result["success"]:
+                        partials.append(result["summary"])
                     else:
-                        logger.warning(f"Empty summary for chunk {i+1}")
-                else:
-                    logger.warning(f"No summary generated for chunk {i+1}")
-
-            except Exception as e:
-                logger.error(f"Error summarizing chunk {i+1}: {str(e)}")
-                # Continue with other chunks rather than failing completely
-                continue
+                        reason = result.get("reason", "unknown")
+                        logger.warning(f"Chunk {chunk_index + 1} failed: {reason}")
+                except Exception as e:
+                    logger.error(f"Chunk {chunk_index + 1} processing failed: {str(e)}")
 
         if not partials:
             raise Exception("No summaries were generated from any chunks")
@@ -165,6 +203,11 @@ def _load_tokenizer(model_name: str):
 @cached_model_loader(lambda: "fast_summarizer")
 @performance_timer("load_summarizer")
 def _load_summarizer(model_name: str):
-    """Load summarizer with caching."""
-    logger.info(f"Loading summarizer: {model_name}")
-    return pipeline("summarization", model=model_name)
+    """Load summarizer with caching and GPU support."""
+    logger.info(f"Loading summarizer: {model_name} (device: {DEVICE})")
+    return pipeline(
+        "summarization", 
+        model=model_name,
+        device=DEVICE,
+        torch_dtype=torch.float16 if GPU_AVAILABLE else torch.float32
+    )

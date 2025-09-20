@@ -114,6 +114,34 @@ def mock_fast_summarize():
 
 
 @pytest.fixture
+def mock_enhance_summarize():
+    """Mock enhance_summarize components with proper function mocking."""
+    with patch('utils.enhance_summarize._initialize_models') as mock_init_models, \
+         patch('utils.enhance_summarize._tokenizer') as mock_tokenizer, \
+         patch('utils.enhance_summarize._summarizer') as mock_summarizer, \
+         patch('utils.enhance_summarize._chunk_text') as mock_chunk_text:
+        
+        # Configure mock tokenizer
+        mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        
+        # Configure mock summarizer
+        mock_summarizer.return_value = [{"summary_text": "Enhanced summary result."}]
+        
+        # Configure mock chunking
+        mock_chunk_text.return_value = ["This is a test chunk of text for enhanced summarization."]
+        
+        # Mock model initialization
+        mock_init_models.return_value = None
+        
+        yield {
+            "tokenizer": mock_tokenizer,
+            "summarizer": mock_summarizer,
+            "init_models": mock_init_models,
+            "chunking": mock_chunk_text
+        }
+
+
+@pytest.fixture
 def mock_transformers():
     """Mock transformers library components."""
     with patch('utils.fast_summarize.AutoTokenizer') as mock_tokenizer, \
