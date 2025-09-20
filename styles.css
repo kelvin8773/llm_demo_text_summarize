@@ -1,0 +1,392 @@
+/* Enhanced UI Styles for LLM Text Summarizer */
+
+/* Main app styling */
+.main {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 1rem;
+}
+
+.stApp {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Sidebar styling */
+.css-1d391kg {
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0 15px 15px 0;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+}
+
+.css-1d391kg .stSelectbox > div > div {
+    background-color: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.css-1d391kg .stSlider > div > div {
+    background-color: rgba(255,255,255,0.9);
+    border-radius: 8px;
+}
+
+.css-1d391kg .stCheckbox > div > div {
+    background-color: rgba(255,255,255,0.9);
+    border-radius: 8px;
+}
+
+/* Text visibility improvements */
+.css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3 {
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.css-1d391kg .stMarkdown {
+    color: white !important;
+}
+
+.css-1d391kg .stSelectbox label {
+    color: white !important;
+    font-weight: 600;
+}
+
+.css-1d391kg .stSlider label {
+    color: white !important;
+    font-weight: 600;
+}
+
+.css-1d391kg .stCheckbox label {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Main content area styling */
+.main .block-container {
+    background: rgba(255,255,255,0.95);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+
+/* Enhanced metric cards */
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 0.5rem 0;
+}
+
+.metric-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.metric-card p {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Enhanced buttons */
+.stButton > button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Enhanced tabs */
+.stTabs [data-baseweb="tab-list"] {
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stTabs [data-baseweb="tab"] {
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Enhanced file upload */
+.stFileUploader > div {
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    border: 2px dashed #667eea;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stFileUploader > div:hover {
+    border-color: #764ba2;
+    background: rgba(255,255,255,1);
+}
+
+/* Enhanced text areas */
+.stTextArea > div > div > textarea {
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    padding: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.stTextArea > div > div > textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Enhanced progress bars */
+.stProgress > div > div > div {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+/* Enhanced alerts and info boxes */
+.stAlert {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Enhanced radio buttons */
+.stRadio > div {
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Enhanced selectbox */
+.stSelectbox > div > div {
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+/* Enhanced slider */
+.stSlider > div > div {
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Enhanced checkbox */
+.stCheckbox > div > div {
+    background: rgba(255,255,255,0.9);
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+/* Dark mode styles */
+.dark-mode .main {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.dark-mode .stApp {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.dark-mode .main .block-container {
+    background: rgba(45, 45, 45, 0.95);
+    color: white;
+}
+
+.dark-mode .css-1d391kg {
+    background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
+}
+
+.dark-mode .metric-card {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    color: white;
+}
+
+.dark-mode .stTabs [data-baseweb="tab-list"] {
+    background: rgba(45, 45, 45, 0.9);
+}
+
+.dark-mode .stFileUploader > div {
+    background: rgba(45, 45, 45, 0.9);
+    color: white;
+}
+
+.dark-mode .stTextArea > div > div > textarea {
+    background: rgba(45, 45, 45, 0.9);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dark-mode .stRadio > div {
+    background: rgba(45, 45, 45, 0.9);
+    color: white;
+}
+
+.dark-mode .stSelectbox > div > div {
+    background: rgba(45, 45, 45, 0.9);
+    color: white;
+}
+
+.dark-mode .stSlider > div > div {
+    background: rgba(45, 45, 45, 0.9);
+    color: white;
+}
+
+.dark-mode .stCheckbox > div > div {
+    background: rgba(45, 45, 45, 0.9);
+    color: white;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding: 1rem;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .css-1d391kg {
+        border-radius: 0;
+    }
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Loading animation */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e9ecef;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+/* Enhanced keyword tags */
+.keyword-tag {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    text-align: center;
+    margin: 0.25rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: inline-block;
+}
+
+/* Enhanced info cards */
+.info-card {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    color: #0c5460;
+}
+
+.success-card {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    color: #155724;
+}
+
+.warning-card {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    color: #856404;
+}
+
+.error-card {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    color: #721c24;
+}
