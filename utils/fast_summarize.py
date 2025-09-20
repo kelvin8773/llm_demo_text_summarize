@@ -33,14 +33,31 @@ def _process_chunk_parallel(args: tuple) -> Dict[str, Any]:
         
         result = summarizer(chunk, max_length=150, min_length=30, truncation=True)
         
-        if result and len(result) > 0 and "summary_text" in result[0]:
-            summary_text = result[0]["summary_text"].strip()
-            if summary_text:
-                return {"index": chunk_index, "success": True, "summary": summary_text}
+        # Handle both real results and mock objects
+        try:
+            if result and len(result) > 0 and "summary_text" in result[0]:
+                summary_text = result[0]["summary_text"].strip()
+                if summary_text:
+                    return {"index": chunk_index, "success": True, "summary": summary_text}
+                else:
+                    return {"index": chunk_index, "success": False, "reason": "empty_summary"}
             else:
-                return {"index": chunk_index, "success": False, "reason": "empty_summary"}
-        else:
-            return {"index": chunk_index, "success": False, "reason": "no_summary"}
+                return {"index": chunk_index, "success": False, "reason": "no_summary"}
+        except (TypeError, AttributeError) as e:
+            # Handle cases where result doesn't have len() or is not indexable
+            try:
+                # Try to convert to list if it's iterable
+                result_list = list(result) if result else []
+                if result_list and len(result_list) > 0 and "summary_text" in result_list[0]:
+                    summary_text = result_list[0]["summary_text"].strip()
+                    if summary_text:
+                        return {"index": chunk_index, "success": True, "summary": summary_text}
+                    else:
+                        return {"index": chunk_index, "success": False, "reason": "empty_summary"}
+                else:
+                    return {"index": chunk_index, "success": False, "reason": "no_summary"}
+            except Exception:
+                return {"index": chunk_index, "success": False, "reason": "invalid_result"}
             
     except Exception as e:
         logger.error(f"Error summarizing chunk {chunk_index + 1}: {str(e)}")
