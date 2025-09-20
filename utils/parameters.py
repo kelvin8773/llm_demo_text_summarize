@@ -35,20 +35,20 @@ MODEL_INFO: Dict[str, Dict[str, str]] = {
         "name": "BART-CNN",
         "description": "High-quality CNN-style summarization",
         "best_for": "News articles, formal documents",
-        "language": "English"
+        "language": "English",
     },
     T5_LARGE_MODEL: {
         "name": "T5-Large",
         "description": "Google's T5 model for text-to-text tasks",
         "best_for": "Diverse content types",
-        "language": "English"
+        "language": "English",
     },
     CHINESE_MODEL: {
         "name": "Chinese BART",
         "description": "Chinese BART model trained on CLUE corpus",
         "best_for": "Chinese text processing",
-        "language": "Chinese"
-    }
+        "language": "Chinese",
+    },
 }
 
 # Available models by language
@@ -82,9 +82,11 @@ MAX_KEYWORDS = 100
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def get_model_info(model_name: str) -> Optional[Dict[str, str]]:
     """Get model information by name."""
     return MODEL_INFO.get(model_name)
+
 
 def get_available_models(language: str = "English") -> List[str]:
     """Get available models for a specific language."""
@@ -96,18 +98,22 @@ def get_available_models(language: str = "English") -> List[str]:
         logger.warning(f"Unknown language: {language}")
         return ENGLISH_MODELS
 
+
 def validate_model(model_name: str) -> bool:
     """Validate if a model is supported."""
     return model_name in MODEL_INFO
+
 
 def get_model_display_name(model_name: str) -> str:
     """Get display name for a model."""
     info = get_model_info(model_name)
     return info.get("name", model_name) if info else model_name
 
+
 # =============================================================================
 # DEPRECATION WARNINGS
 # =============================================================================
+
 
 def _warn_experimental_models():
     """Warn about experimental models."""

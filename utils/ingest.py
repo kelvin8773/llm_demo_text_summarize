@@ -2,44 +2,102 @@
 import docx
 from PyPDF2 import PdfReader
 import logging
+import os
+import re
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Security constants
+ALLOWED_EXTENSIONS = {".pdf", ".txt", ".docx"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+DANGEROUS_PATTERNS = [
+    r"\.\./",  # Path traversal
+    r"\.\.\\",  # Windows path traversal
+    r"<script",  # XSS attempts
+    r"javascript:",  # JavaScript injection
+]
+
+
+def _validate_file_name(file_name: str) -> str:
+    """Validate and sanitize file name for security."""
+    if not file_name or file_name == "unknown":
+        raise ValueError("Invalid file name")
+
+    # Remove any path components
+    file_name = os.path.basename(file_name)
+
+    # Check for dangerous patterns
+    for pattern in DANGEROUS_PATTERNS:
+        if re.search(pattern, file_name, re.IGNORECASE):
+            raise ValueError(
+                f"File name contains potentially dangerous pattern: {pattern}"
+            )
+
+    # Ensure file has an extension
+    if not Path(file_name).suffix:
+        raise ValueError("File must have an extension")
+
+    return file_name
+
+
+def _validate_file_extension(file_name: str) -> str:
+    """Validate file extension against allowed types."""
+    file_ext = Path(file_name).suffix.lower()
+
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise ValueError(
+            f"Unsupported file type: {file_ext}. "
+            f"Supported formats: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+
+    return file_ext
 
 
 def load_document(file):
     """
     Load text content from various document formats.
-    
+
     Args:
         file: File object (uploaded file or file-like object)
-        
+
     Returns:
         str: Extracted text content
-        
+
     Raises:
         ValueError: For unsupported file types or empty documents
         Exception: For file processing errors
     """
     if not file:
         raise ValueError("No file provided")
-    
-    file_name = getattr(file, 'name', 'unknown')
-    file_size = getattr(file, 'size', 0)
-    
+
+    # Get and validate file attributes
+    file_name = getattr(file, "name", "unknown")
+    file_size = getattr(file, "size", 0)
+
+    # Security validations
+    file_name = _validate_file_name(file_name)
+    file_ext = _validate_file_extension(file_name)
+
     # Check file size (limit to 10MB)
-    if file_size > 10 * 1024 * 1024:
-        raise ValueError(f"File too large ({file_size / (1024*1024):.1f}MB). Maximum size is 10MB.")
-    
+    if file_size > MAX_FILE_SIZE:
+        raise ValueError(
+            f"File too large ({file_size / (1024*1024):.1f}MB). Maximum size is 10MB."
+        )
+
     try:
-        if file_name.lower().endswith(".pdf"):
+        if file_ext == ".pdf":
             return _load_pdf(file)
-        elif file_name.lower().endswith(".txt"):
+        elif file_ext == ".txt":
             return _load_txt(file)
-        elif file_name.lower().endswith(".docx"):
+        elif file_ext == ".docx":
             return _load_docx(file)
         else:
-            raise ValueError(f"Unsupported file type: {file_name}. Supported formats: PDF, TXT, DOCX")
-            
+            # This should not happen due to validation above, but keeping as fallback
+            raise ValueError(
+                f"Unsupported file type: {file_ext}. Supported formats: PDF, TXT, DOCX"
+            )
+
     except Exception as e:
         logger.error(f"Error loading document {file_name}: {str(e)}")
         raise Exception(f"Failed to load document: {str(e)}")
@@ -49,10 +107,10 @@ def _load_pdf(file):
     """Load text from PDF file with enhanced error handling."""
     try:
         reader = PdfReader(file)
-        
+
         if len(reader.pages) == 0:
             raise ValueError("PDF file appears to be empty or corrupted")
-        
+
         text_parts = []
         for i, page in enumerate(reader.pages):
             try:
@@ -60,26 +118,36 @@ def _load_pdf(file):
                 if page_text and page_text.strip():
                     text_parts.append(page_text.strip())
                 else:
-                    logger.warning(f"Page {i+1} appears to be empty or contains only images")
+                    logger.warning(
+                        f"Page {i+1} appears to be empty or contains only images"
+                    )
             except Exception as e:
                 logger.warning(f"Could not extract text from page {i+1}: {str(e)}")
                 continue
-        
+
         if not text_parts:
-            raise ValueError("No readable text found in PDF. The document may contain only images or be password-protected.")
-        
+            raise ValueError(
+                "No readable text found in PDF. The document may contain only images or be password-protected."
+            )
+
         text = " ".join(text_parts)
-        
+
         if len(text.strip()) < 50:
-            raise ValueError("PDF contains very little text. Please ensure the document has readable text content.")
-        
+            raise ValueError(
+                "PDF contains very little text. Please ensure the document has readable text content."
+            )
+
         return text
-        
+
     except Exception as e:
         if "password" in str(e).lower():
-            raise ValueError("PDF appears to be password-protected. Please provide an unlocked version.")
+            raise ValueError(
+                "PDF appears to be password-protected. Please provide an unlocked version."
+            )
         elif "corrupted" in str(e).lower():
-            raise ValueError("PDF file appears to be corrupted. Please try a different file.")
+            raise ValueError(
+                "PDF file appears to be corrupted. Please try a different file."
+            )
         else:
             raise Exception(f"Error reading PDF: {str(e)}")
 
@@ -99,12 +167,14 @@ def _load_txt(file):
             except UnicodeDecodeError:
                 file.seek(0)
                 text = file.read().decode("cp1252")
-        
+
         if not text or len(text.strip()) < 10:
-            raise ValueError("Text file appears to be empty or contains very little content")
-        
+            raise ValueError(
+                "Text file appears to be empty or contains very little content"
+            )
+
         return text.strip()
-        
+
     except Exception as e:
         raise Exception(f"Error reading text file: {str(e)}")
 
@@ -113,27 +183,31 @@ def _load_docx(file):
     """Load text from DOCX file with error handling."""
     try:
         doc = docx.Document(file)
-        
+
         if not doc.paragraphs:
             raise ValueError("DOCX file appears to be empty")
-        
+
         text_parts = []
         for paragraph in doc.paragraphs:
             if paragraph.text and paragraph.text.strip():
                 text_parts.append(paragraph.text.strip())
-        
+
         if not text_parts:
             raise ValueError("No readable text found in DOCX file")
-        
+
         text = " ".join(text_parts)
-        
+
         if len(text.strip()) < 50:
-            raise ValueError("DOCX contains very little text. Please ensure the document has readable content.")
-        
+            raise ValueError(
+                "DOCX contains very little text. Please ensure the document has readable content."
+            )
+
         return text
-        
+
     except Exception as e:
         if "corrupted" in str(e).lower():
-            raise ValueError("DOCX file appears to be corrupted. Please try a different file.")
+            raise ValueError(
+                "DOCX file appears to be corrupted. Please try a different file."
+            )
         else:
             raise Exception(f"Error reading DOCX file: {str(e)}")

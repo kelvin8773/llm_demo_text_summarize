@@ -2,12 +2,10 @@ from transformers import pipeline, AutoTokenizer
 import logging
 from .parameters import BART_CNN_MODEL
 from .performance import (
-    cached_model_loader, 
-    performance_timer, 
+    cached_model_loader,
+    performance_timer,
     memory_aware,
     optimize_text_chunking,
-    model_cache,
-    performance_monitor
 )
 
 logger = logging.getLogger(__name__)
@@ -18,15 +16,15 @@ logger = logging.getLogger(__name__)
 def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
     """
     Fast text summarization using transformer models with enhanced error handling.
-    
+
     Args:
         text (str): Input text to summarize
         max_sentences (int): Maximum number of sentences in summary
         model_name (str): Name of the model to use
-        
+
     Returns:
         str: Generated summary
-        
+
     Raises:
         ValueError: For invalid input parameters
         Exception: For model loading or processing errors
@@ -34,27 +32,29 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
     # Input validation
     if not text or not text.strip():
         raise ValueError("Input text is empty or contains only whitespace")
-    
+
     if len(text.strip()) < 50:
-        raise ValueError("Input text is too short for meaningful summarization (minimum 50 characters)")
-    
+        raise ValueError(
+            "Input text is too short for meaningful summarization (minimum 50 characters)"
+        )
+
     if max_sentences < 1 or max_sentences > 50:
         raise ValueError("max_sentences must be between 1 and 50")
-    
+
     if not model_name:
         raise ValueError("Model name is required")
-    
+
     try:
         # Load models with caching
         tokenizer = _load_tokenizer(model_name)
         summarizer = _load_summarizer(model_name)
-        
+
         # Validate model loaded successfully
         if not tokenizer or not summarizer:
             raise Exception("Failed to load model components")
-        
+
         logger.info("Model loaded successfully")
-        
+
     except Exception as e:
         logger.error(f"Error loading model {model_name}: {str(e)}")
         raise Exception(f"Failed to load model '{model_name}': {str(e)}")
@@ -64,21 +64,16 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
         chunks = optimize_text_chunking(text, max_tokens=900, tokenizer=tokenizer)
         if not chunks:
             raise ValueError("Text could not be processed into chunks")
-        
+
         partials = []
         for i, ch in enumerate(chunks):
             try:
                 if len(ch.strip()) < 10:
                     logger.warning(f"Skipping chunk {i+1} - too short")
                     continue
-                
-                result = summarizer(
-                    ch, 
-                    max_length=150, 
-                    min_length=30, 
-                    truncation=True
-                )
-                
+
+                result = summarizer(ch, max_length=150, min_length=30, truncation=True)
+
                 if result and len(result) > 0 and "summary_text" in result[0]:
                     summary_text = result[0]["summary_text"].strip()
                     if summary_text:
@@ -87,7 +82,7 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
                         logger.warning(f"Empty summary for chunk {i+1}")
                 else:
                     logger.warning(f"No summary generated for chunk {i+1}")
-                    
+
             except Exception as e:
                 logger.error(f"Error summarizing chunk {i+1}: {str(e)}")
                 # Continue with other chunks rather than failing completely
@@ -105,22 +100,28 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
         try:
             if len(tokenizer.encode(combined)) > 900:
                 logger.info("Performing second-pass summarization")
-                combined_chunks = chunk_text(combined)
+                combined_chunks = optimize_text_chunking(
+                    combined, max_tokens=900, tokenizer=tokenizer
+                )
                 refined_parts = []
-                
+
                 for ch in combined_chunks:
                     try:
-                        out = summarizer(ch, max_length=150, min_length=30, truncation=True)[0]["summary_text"].strip()
+                        out = summarizer(
+                            ch, max_length=150, min_length=30, truncation=True
+                        )[0]["summary_text"].strip()
                         if out:
                             refined_parts.append(out)
                     except Exception as e:
                         logger.warning(f"Error in second-pass summarization: {str(e)}")
                         continue
-                
+
                 if refined_parts:
                     combined = " ".join(refined_parts)
                 else:
-                    logger.warning("Second-pass summarization failed, using original combined summary")
+                    logger.warning(
+                        "Second-pass summarization failed, using original combined summary"
+                    )
         except Exception as e:
             logger.warning(f"Second-pass summarization failed: {str(e)}")
 
@@ -129,7 +130,7 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
             try:
                 sentences = combined.split(".")
                 sentences = [s.strip() for s in sentences if s.strip()]
-                
+
                 if len(sentences) > max_sentences:
                     combined = ". ".join(sentences[:max_sentences]).strip()
                     if not combined.endswith("."):
