@@ -3,6 +3,14 @@ import re
 import logging
 from typing import List, Optional
 from .parameters import CHINESE_MODEL
+from .performance import (
+    cached_model_loader, 
+    performance_timer, 
+    memory_aware,
+    optimize_text_chunking,
+    model_cache,
+    performance_monitor
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,49 +25,57 @@ _tokenizer: Optional[AutoTokenizer] = None
 _summarizer: Optional[pipeline] = None
 
 
+@cached_model_loader(lambda: "chinese_tokenizer")
+@performance_timer("initialize_chinese_tokenizer")
+def _initialize_chinese_tokenizer() -> AutoTokenizer:
+    """Initialize Chinese tokenizer with caching."""
+    logger.info(f"Initializing Chinese tokenizer: {MODEL_NAME}")
+    return AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
+
+
+@cached_model_loader(lambda: "chinese_summarizer")
+@performance_timer("initialize_chinese_summarizer")
+def _initialize_chinese_summarizer() -> pipeline:
+    """Initialize Chinese summarizer with caching."""
+    logger.info(f"Initializing Chinese summarizer: {MODEL_NAME}")
+    tokenizer = _initialize_chinese_tokenizer()
+    return pipeline(
+        "summarization",
+        model=MODEL_NAME,
+        tokenizer=tokenizer,
+        device=-1,  # use CPU; change to 0 for GPU
+    )
+
+
 def _initialize_models() -> None:
     """Initialize Chinese tokenizer and summarizer models."""
     global _tokenizer, _summarizer
     
-    if _tokenizer is None or _summarizer is None:
-        try:
-            logger.info(f"Initializing Chinese summarization model: {MODEL_NAME}")
-            _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
-            
-            _summarizer = pipeline(
-                "summarization",
-                model=MODEL_NAME,
-                tokenizer=_tokenizer,
-                device=-1,  # use CPU; change to 0 for GPU
-            )
-            logger.info("Chinese summarization model initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize Chinese summarization model: {e}")
-            raise Exception(f"Chinese model initialization failed: {e}")
+    if _tokenizer is None:
+        _tokenizer = _initialize_chinese_tokenizer()
+    
+    if _summarizer is None:
+        _summarizer = _initialize_chinese_summarizer()
 
 
+@performance_timer("chunk_chinese_text")
 def _chunk_text(text: str, max_tokens: int = DEFAULT_MAX_TOKENS) -> List[str]:
     """Split Chinese text into token-safe chunks for processing."""
     if not text or not text.strip():
         return []
     
-    try:
-        # Directly tokenize raw text
-        token_ids = _tokenizer.encode(text, add_special_tokens=False)
-        if not token_ids:
-            return []
-        
-        chunks = []
-        for i in range(0, len(token_ids), max_tokens):
-            chunk_ids = token_ids[i : i + max_tokens]
-            chunk_text = _tokenizer.decode(chunk_ids, skip_special_tokens=True)
-            if chunk_text and chunk_text.strip():
-                chunks.append(chunk_text.strip())
-        
-        return chunks
-    except Exception as e:
-        logger.error(f"Error chunking Chinese text: {e}")
-        raise Exception(f"Failed to chunk Chinese text: {e}")
+    # Use optimized chunking if tokenizer is available
+    if _tokenizer is not None:
+        return optimize_text_chunking(text, max_tokens, _tokenizer)
+    
+    # Fallback to simple character-based chunking for Chinese
+    chunks = []
+    for i in range(0, len(text), max_tokens * 2):  # Rough estimate for Chinese
+        chunk = text[i:i + max_tokens * 2]
+        if chunk.strip():
+            chunks.append(chunk.strip())
+    
+    return chunks
 
 
 def _split_chinese_sentences(text: str) -> List[str]:
@@ -84,6 +100,8 @@ def _validate_input(text: str, max_sentences: int) -> None:
         raise ValueError("max_sentences must be between 1 and 50")
 
 
+@performance_timer("chinese_summarize_text")
+@memory_aware
 def chinese_summarize_text(text: str, max_sentences: int = DEFAULT_MAX_SENTENCES) -> str:
     """
     Chinese text summarization with specialized models and processing.

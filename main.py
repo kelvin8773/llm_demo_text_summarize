@@ -16,6 +16,13 @@ from utils.parameters import (
     BART_CNN_MODEL,
     T5_LARGE_MODEL,
 )
+from utils.performance_dashboard import (
+    render_performance_dashboard,
+    render_performance_widget,
+    render_performance_alerts,
+    track_operation_time
+)
+from utils.performance import get_cache_stats, cleanup_resources
 
 st.set_page_config(
     page_title="LLM Text Summarizer",
@@ -26,6 +33,12 @@ st.set_page_config(
 
 st.title("📄 Documents Summarizer & Insight Extractor")
 st.markdown("---")
+
+# Performance alerts
+render_performance_alerts()
+
+# Performance widget in sidebar
+render_performance_widget()
 
 # Sidebar for settings
 with st.sidebar:
@@ -113,15 +126,15 @@ if use_sample:
             progress_bar.progress(50)
             
             if language == "Chinese":
-                summary = chinese_summarize_text(raw_text, max_sentences)
-                keywords = extract_chinese_keywords(raw_text, top_n=15)
+                summary = track_operation_time("chinese_summarization")(chinese_summarize_text)(raw_text, max_sentences)
+                keywords = track_operation_time("chinese_keywords")(extract_chinese_keywords)(raw_text, top_n=15)
             else:
                 if mode == "Fast Summarizer":
-                    summary = fast_summarize_text(raw_text, max_sentences, model_name=model)
-                    keywords = extract_keywords(raw_text, top_n=15)
+                    summary = track_operation_time("fast_summarization")(fast_summarize_text)(raw_text, max_sentences, model_name=model)
+                    keywords = track_operation_time("english_keywords")(extract_keywords)(raw_text, top_n=15)
                 else:
-                    summary = enhance_summarize_text(raw_text, max_sentences)
-                    keywords = extract_keywords_phrases(raw_text, top_n=15)
+                    summary = track_operation_time("enhanced_summarization")(enhance_summarize_text)(raw_text, max_sentences)
+                    keywords = track_operation_time("english_phrases")(extract_keywords_phrases)(raw_text, top_n=15)
             
             status_text.text("🔍 Extracting keywords...")
             progress_bar.progress(80)
@@ -218,15 +231,15 @@ else:
             progress_bar.progress(50)
             
             if language == "Chinese":
-                summary = chinese_summarize_text(raw_text, max_sentences)
-                keywords = extract_chinese_keywords(raw_text, top_n=15)
+                summary = track_operation_time("chinese_summarization")(chinese_summarize_text)(raw_text, max_sentences)
+                keywords = track_operation_time("chinese_keywords")(extract_chinese_keywords)(raw_text, top_n=15)
             else:
                 if mode == "Fast Summarizer":
-                    summary = fast_summarize_text(raw_text, max_sentences, model_name=model)
-                    keywords = extract_keywords(raw_text, top_n=15)
+                    summary = track_operation_time("fast_summarization")(fast_summarize_text)(raw_text, max_sentences, model_name=model)
+                    keywords = track_operation_time("english_keywords")(extract_keywords)(raw_text, top_n=15)
                 else:
-                    summary = enhance_summarize_text(raw_text, max_sentences)
-                    keywords = extract_keywords_phrases(raw_text, top_n=15)
+                    summary = track_operation_time("enhanced_summarization")(enhance_summarize_text)(raw_text, max_sentences)
+                    keywords = track_operation_time("english_phrases")(extract_keywords_phrases)(raw_text, top_n=15)
             
             status_text.text("🔍 Extracting keywords...")
             progress_bar.progress(80)
@@ -250,7 +263,7 @@ if 'raw_text' in locals() and 'summary' in locals():
     st.markdown("---")
     
     # Create tabs for better organization
-    tab1, tab2, tab3, tab4 = st.tabs(["📄 Summary", "🔍 Keywords", "📊 Visualization", "📝 Original Text"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📄 Summary", "🔍 Keywords", "📊 Visualization", "📝 Original Text", "⚡ Performance"])
     
     with tab1:
         st.subheader("📄 Generated Summary")
@@ -307,6 +320,9 @@ if 'raw_text' in locals() and 'summary' in locals():
             st.info(f"Full text length: {len(raw_text)} characters")
         else:
             st.text_area("Original Text", raw_text, height=300, disabled=True)
+    
+    with tab5:
+        render_performance_dashboard()
     
     # Export functionality (placeholder for now)
     st.markdown("---")

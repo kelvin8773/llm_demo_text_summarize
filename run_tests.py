@@ -121,25 +121,26 @@ def run_visualization_tests(verbose=False):
 
 def check_dependencies():
     """Check if required dependencies are installed."""
-    required_packages = [
-        "pytest",
-        "pytest-cov",
-        "pytest-mock",
-        "transformers",
-        "torch",
-        "scikit-learn",
-        "matplotlib",
-        "spacy",
-        "jieba"
-    ]
+    # Map package names to their import names
+    required_packages = {
+        "pytest": "pytest",
+        "pytest-cov": "pytest_cov",
+        "pytest-mock": "pytest_mock",
+        "transformers": "transformers",
+        "torch": "torch",
+        "scikit-learn": "sklearn",  # Import name is sklearn, not scikit-learn
+        "matplotlib": "matplotlib",
+        "spacy": "spacy",
+        "jieba": "jieba"
+    }
     
     missing_packages = []
     
-    for package in required_packages:
+    for package_name, import_name in required_packages.items():
         try:
-            __import__(package.replace("-", "_"))
+            __import__(import_name)
         except ImportError:
-            missing_packages.append(package)
+            missing_packages.append(package_name)
     
     if missing_packages:
         print("❌ Missing required packages:")

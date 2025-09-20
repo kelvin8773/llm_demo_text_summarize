@@ -1,10 +1,20 @@
 from transformers import pipeline, AutoTokenizer
 import logging
 from .parameters import BART_CNN_MODEL
+from .performance import (
+    cached_model_loader, 
+    performance_timer, 
+    memory_aware,
+    optimize_text_chunking,
+    model_cache,
+    performance_monitor
+)
 
 logger = logging.getLogger(__name__)
 
 
+@performance_timer("fast_summarize_text")
+@memory_aware
 def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
     """
     Fast text summarization using transformer models with enhanced error handling.
@@ -35,10 +45,9 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
         raise ValueError("Model name is required")
     
     try:
-        # Init tokenizer + pipeline with error handling
-        logger.info(f"Loading model: {model_name}")
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        summarizer = pipeline("summarization", model=model_name)
+        # Load models with caching
+        tokenizer = _load_tokenizer(model_name)
+        summarizer = _load_summarizer(model_name)
         
         # Validate model loaded successfully
         if not tokenizer or not summarizer:
@@ -51,30 +60,8 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
         raise Exception(f"Failed to load model '{model_name}': {str(e)}")
 
     try:
-        # 1. Token-safe chunking with validation
-        def chunk_text(txt, max_tokens=900):
-            if not txt or not txt.strip():
-                return []
-            
-            try:
-                token_ids = tokenizer.encode(txt, add_special_tokens=False)
-                if not token_ids:
-                    return []
-                
-                chunks = []
-                for i in range(0, len(token_ids), max_tokens):
-                    chunk_ids = token_ids[i : i + max_tokens]
-                    chunk_text = tokenizer.decode(chunk_ids, skip_special_tokens=True)
-                    if chunk_text and chunk_text.strip():
-                        chunks.append(chunk_text.strip())
-                
-                return chunks
-            except Exception as e:
-                logger.error(f"Error chunking text: {str(e)}")
-                raise Exception(f"Failed to chunk text: {str(e)}")
-
-        # 2. Summarize each chunk individually with error handling
-        chunks = chunk_text(text)
+        # 1. Optimized token-safe chunking
+        chunks = optimize_text_chunking(text, max_tokens=900, tokenizer=tokenizer)
         if not chunks:
             raise ValueError("Text could not be processed into chunks")
         
@@ -164,3 +151,19 @@ def fast_summarize_text(text, max_sentences=3, model_name=BART_CNN_MODEL):
     except Exception as e:
         logger.error(f"Error in fast_summarize_text: {str(e)}")
         raise Exception(f"Summarization failed: {str(e)}")
+
+
+@cached_model_loader(lambda: "fast_tokenizer")
+@performance_timer("load_tokenizer")
+def _load_tokenizer(model_name: str):
+    """Load tokenizer with caching."""
+    logger.info(f"Loading tokenizer: {model_name}")
+    return AutoTokenizer.from_pretrained(model_name)
+
+
+@cached_model_loader(lambda: "fast_summarizer")
+@performance_timer("load_summarizer")
+def _load_summarizer(model_name: str):
+    """Load summarizer with caching."""
+    logger.info(f"Loading summarizer: {model_name}")
+    return pipeline("summarization", model=model_name)

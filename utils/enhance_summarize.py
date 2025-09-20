@@ -3,6 +3,14 @@ import re
 import logging
 from typing import List, Optional
 from .parameters import BART_CNN_MODEL
+from .performance import (
+    cached_model_loader, 
+    performance_timer, 
+    memory_aware,
+    optimize_text_chunking,
+    model_cache,
+    performance_monitor
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,26 +26,40 @@ _summarizer: Optional[pipeline] = None
 MAX_INPUT_TOKENS = DEFAULT_MAX_TOKENS
 
 
+@cached_model_loader(lambda: "enhance_tokenizer")
+@performance_timer("initialize_enhance_tokenizer")
+def _initialize_tokenizer() -> AutoTokenizer:
+    """Initialize tokenizer with caching."""
+    logger.info(f"Initializing enhanced tokenizer: {MODEL_NAME}")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
+    global MAX_INPUT_TOKENS
+    MAX_INPUT_TOKENS = min(tokenizer.model_max_length, DEFAULT_MAX_TOKENS)
+    return tokenizer
+
+
+@cached_model_loader(lambda: "enhance_summarizer")
+@performance_timer("initialize_enhance_summarizer")
+def _initialize_summarizer() -> pipeline:
+    """Initialize summarizer with caching."""
+    logger.info(f"Initializing enhanced summarizer: {MODEL_NAME}")
+    tokenizer = _initialize_tokenizer()
+    return pipeline(
+        "summarization", 
+        model=MODEL_NAME, 
+        tokenizer=tokenizer, 
+        device=-1
+    )
+
+
 def _initialize_models() -> None:
     """Initialize tokenizer and summarizer models."""
-    global _tokenizer, _summarizer, MAX_INPUT_TOKENS
+    global _tokenizer, _summarizer
     
-    if _tokenizer is None or _summarizer is None:
-        try:
-            logger.info(f"Initializing enhanced summarization model: {MODEL_NAME}")
-            _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
-            MAX_INPUT_TOKENS = min(_tokenizer.model_max_length, DEFAULT_MAX_TOKENS)
-            
-            _summarizer = pipeline(
-                "summarization", 
-                model=MODEL_NAME, 
-                tokenizer=_tokenizer, 
-                device=-1
-            )
-            logger.info("Enhanced summarization model initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize enhanced summarization model: {e}")
-            raise Exception(f"Model initialization failed: {e}")
+    if _tokenizer is None:
+        _tokenizer = _initialize_tokenizer()
+    
+    if _summarizer is None:
+        _summarizer = _initialize_summarizer()
 
 
 def _split_sentences(text: str) -> List[str]:
@@ -49,6 +71,7 @@ def _split_sentences(text: str) -> List[str]:
     return [s.strip() for s in sentences if s.strip()]
 
 
+@performance_timer("chunk_text")
 def _chunk_text(text: str, max_tokens: int = None) -> List[str]:
     """Split text into token-safe chunks for processing."""
     if max_tokens is None:
@@ -57,6 +80,11 @@ def _chunk_text(text: str, max_tokens: int = None) -> List[str]:
     if not text or not text.strip():
         return []
     
+    # Use optimized chunking if tokenizer is available
+    if _tokenizer is not None:
+        return optimize_text_chunking(text, max_tokens, _tokenizer)
+    
+    # Fallback to sentence-based chunking
     sentences = _split_sentences(text)
     if not sentences:
         return []
@@ -67,7 +95,8 @@ def _chunk_text(text: str, max_tokens: int = None) -> List[str]:
     
     for sentence in sentences:
         try:
-            token_length = len(_tokenizer.encode(sentence, add_special_tokens=False))
+            # Rough estimate for token length
+            token_length = len(sentence.split()) * 1.3  # Rough estimate
             
             if current_length + token_length > max_tokens and current_chunk:
                 # Start new chunk
@@ -120,6 +149,8 @@ def _validate_input(text: str, max_sentences: int) -> None:
         raise ValueError("max_sentences must be between 1 and 50")
 
 
+@performance_timer("enhance_summarize_text")
+@memory_aware
 def enhance_summarize_text(text: str, max_sentences: int = DEFAULT_MAX_SENTENCES) -> str:
     """
     Enhanced text summarization with advanced parameters and markdown formatting.

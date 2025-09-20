@@ -1,0 +1,40 @@
+{
+  "performance": {
+    "cache_size_limit": 100,
+    "cache_ttl": 3600,
+    "memory_threshold": 0.8,
+    "cleanup_interval": 300,
+    "enable_background_cleanup": true,
+    "enable_memory_monitoring": true,
+    "enable_performance_tracking": true
+  },
+  "models": {
+    "default_max_tokens": 1024,
+    "chinese_max_tokens": 800,
+    "enable_model_caching": true,
+    "model_cache_ttl": 7200,
+    "lazy_loading": true
+  },
+  "processing": {
+    "max_file_size_mb": 10,
+    "min_text_length": 50,
+    "max_text_length": 100000,
+    "chunk_overlap": 50,
+    "batch_size": 5,
+    "processing_delay": 0.1
+  },
+  "ui": {
+    "enable_performance_dashboard": true,
+    "enable_performance_alerts": true,
+    "performance_data_retention_hours": 24,
+    "max_performance_data_points": 1000,
+    "performance_collection_interval": 5
+  },
+  "logging": {
+    "level": "INFO",
+    "enable_performance_logging": true,
+    "log_file": "performance.log",
+    "max_log_size_mb": 10,
+    "backup_count": 5
+  }
+}
