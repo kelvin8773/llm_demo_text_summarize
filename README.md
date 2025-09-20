@@ -1,6 +1,6 @@
-# LLM Demostraton - A Text and Documents Summarization Tool
+# LLM Demonstration - A Text and Documents Summarization Tool
 
-## Overveiew
+## Overview
 
 LLM Demonstration is a powerful tool designed to summarize text and documents using advanced language models. This application leverages the capabilities of large language models (LLMs) to provide concise and accurate summaries, making it easier for users to digest large amounts of information quickly.
 
