@@ -103,16 +103,17 @@ class TestLoadDocument:
         """Test loading file without name attribute."""
         mock_file = Mock()
         mock_file.size = 1024
-        # No name attribute
-        
-        with pytest.raises(ValueError, match="Unsupported file type"):
+        # No name attribute - getattr will return "unknown"
+        del mock_file.name  # Ensure no name attribute exists
+
+        with pytest.raises(ValueError, match="Invalid file name"):
             load_document(mock_file)
     
     def test_file_without_size_attribute(self):
         """Test loading file without size attribute."""
         mock_file = Mock()
         mock_file.name = "test.pdf"
-        # No size attribute
+        # No size attribute - getattr will return 0
         
         with patch('utils.ingest._load_pdf') as mock_load_pdf:
             mock_load_pdf.return_value = SAMPLE_PDF_CONTENT
@@ -133,15 +134,16 @@ class TestLoadPdf:
             # Mock PDF reader and pages
             mock_reader = Mock()
             mock_page1 = Mock()
-            mock_page1.extract_text.return_value = "Page 1 content"
+            mock_page1.extract_text.return_value = "This is a longer page content with enough text to pass the minimum length requirement."
             mock_page2 = Mock()
-            mock_page2.extract_text.return_value = "Page 2 content"
+            mock_page2.extract_text.return_value = "This is another page with sufficient content to meet the character count threshold."
             mock_reader.pages = [mock_page1, mock_page2]
             mock_pdf_reader.return_value = mock_reader
             
             result = _load_pdf(mock_file)
             
-            assert result == "Page 1 content Page 2 content"
+            expected = "This is a longer page content with enough text to pass the minimum length requirement. This is another page with sufficient content to meet the character count threshold."
+            assert result == expected
             mock_pdf_reader.assert_called_once_with(mock_file)
     
     def test_empty_pdf(self):
@@ -153,7 +155,7 @@ class TestLoadPdf:
             mock_reader.pages = []
             mock_pdf_reader.return_value = mock_reader
             
-            with pytest.raises(ValueError, match="PDF file appears to be empty"):
+            with pytest.raises(ValueError, match="PDF file appears to be empty or corrupted"):
                 _load_pdf(mock_file)
     
     def test_pdf_with_empty_pages(self):
@@ -191,7 +193,7 @@ class TestLoadPdf:
         with patch('utils.ingest.PdfReader') as mock_pdf_reader:
             mock_reader = Mock()
             mock_page1 = Mock()
-            mock_page1.extract_text.return_value = "Page 1 content"
+            mock_page1.extract_text.return_value = "This is a longer page content with enough text to pass the minimum length requirement for PDF processing."
             mock_page2 = Mock()
             mock_page2.extract_text.side_effect = Exception("Page extraction failed")
             mock_reader.pages = [mock_page1, mock_page2]
@@ -200,7 +202,7 @@ class TestLoadPdf:
             result = _load_pdf(mock_file)
             
             # Should still work with successful pages
-            assert result == "Page 1 content"
+            assert result == "This is a longer page content with enough text to pass the minimum length requirement for PDF processing."
     
     def test_password_protected_pdf(self):
         """Test handling of password-protected PDF."""
@@ -243,36 +245,43 @@ class TestLoadTxt:
         
         result = _load_txt(mock_file)
         
-        assert result == SAMPLE_TXT_CONTENT
-        assert mock_file.seek.call_count == 2  # Called twice for reset
+        # The function strips whitespace, so we need to compare with stripped content
+        assert result == SAMPLE_TXT_CONTENT.strip()
+        assert mock_file.seek.call_count == 1  # Called once for reset
     
     def test_successful_txt_loading_latin1(self):
         """Test successful TXT loading with Latin-1 encoding."""
         mock_file = Mock()
-        mock_file.read.side_effect = [
-            SAMPLE_TXT_CONTENT.encode('latin-1'),  # First read fails UTF-8
-            SAMPLE_TXT_CONTENT.encode('latin-1')   # Second read succeeds Latin-1
-        ]
         
-        # Mock UnicodeDecodeError for first read
-        with patch('builtins.decode', side_effect=[UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid start byte'), SAMPLE_TXT_CONTENT]):
-            result = _load_txt(mock_file)
-            
-            assert result == SAMPLE_TXT_CONTENT
+        # Create a mock bytes object that raises UnicodeDecodeError on decode('utf-8')
+        # but succeeds on decode('latin-1')
+        mock_bytes = Mock()
+        mock_bytes.decode.side_effect = [
+            UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid start byte'),  # First decode fails
+            SAMPLE_TXT_CONTENT  # Second decode succeeds
+        ]
+        mock_file.read.return_value = mock_bytes
+        
+        result = _load_txt(mock_file)
+        
+        assert result == SAMPLE_TXT_CONTENT.strip()
     
     def test_successful_txt_loading_cp1252(self):
         """Test successful TXT loading with CP1252 encoding."""
         mock_file = Mock()
         
-        # Mock multiple encoding failures
-        with patch('builtins.decode', side_effect=[
-            UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid start byte'),
-            UnicodeDecodeError('latin-1', b'', 0, 1, 'invalid start byte'),
-            SAMPLE_TXT_CONTENT
-        ]):
-            result = _load_txt(mock_file)
-            
-            assert result == SAMPLE_TXT_CONTENT
+        # Create a mock bytes object that fails UTF-8 and Latin-1, succeeds CP1252
+        mock_bytes = Mock()
+        mock_bytes.decode.side_effect = [
+            UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid start byte'),  # UTF-8 fails
+            UnicodeDecodeError('latin-1', b'', 0, 1, 'invalid start byte'),  # Latin-1 fails
+            SAMPLE_TXT_CONTENT  # CP1252 succeeds
+        ]
+        mock_file.read.return_value = mock_bytes
+        
+        result = _load_txt(mock_file)
+        
+        assert result == SAMPLE_TXT_CONTENT.strip()
     
     def test_empty_txt_file(self):
         """Test loading empty TXT file."""
@@ -293,12 +302,18 @@ class TestLoadTxt:
     def test_txt_file_encoding_error(self):
         """Test handling of TXT file encoding errors."""
         mock_file = Mock()
-        mock_file.read.return_value = b"Invalid bytes"
         
-        # Mock all encoding attempts to fail
-        with patch('builtins.decode', side_effect=UnicodeDecodeError('cp1252', b'', 0, 1, 'invalid start byte')):
-            with pytest.raises(Exception, match="Error reading text file"):
-                _load_txt(mock_file)
+        # Create a mock bytes object that fails all decode attempts
+        mock_bytes = Mock()
+        mock_bytes.decode.side_effect = [
+            UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid start byte'),  # UTF-8 fails
+            UnicodeDecodeError('latin-1', b'', 0, 1, 'invalid start byte'),  # Latin-1 fails
+            UnicodeDecodeError('cp1252', b'', 0, 1, 'invalid start byte')   # CP1252 fails
+        ]
+        mock_file.read.return_value = mock_bytes
+        
+        with pytest.raises(Exception, match="Error reading text file"):
+            _load_txt(mock_file)
 
 
 class TestLoadDocx:

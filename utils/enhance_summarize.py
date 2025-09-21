@@ -33,11 +33,15 @@ MAX_INPUT_TOKENS = DEFAULT_MAX_TOKENS
 @performance_timer("initialize_enhance_tokenizer")
 def _initialize_tokenizer() -> AutoTokenizer:
     """Initialize tokenizer with caching."""
-    logger.info(f"Initializing enhanced tokenizer: {MODEL_NAME}")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
-    global MAX_INPUT_TOKENS
-    MAX_INPUT_TOKENS = min(tokenizer.model_max_length, DEFAULT_MAX_TOKENS)
-    return tokenizer
+    try:
+        logger.info(f"Initializing enhanced tokenizer: {MODEL_NAME}")
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=False)
+        global MAX_INPUT_TOKENS
+        MAX_INPUT_TOKENS = min(tokenizer.model_max_length, DEFAULT_MAX_TOKENS)
+        return tokenizer
+    except Exception as e:
+        logger.error(f"Failed to initialize tokenizer: {e}")
+        raise Exception(f"Model initialization failed: {e}")
 
 
 @cached_model_loader(lambda: "enhance_summarizer")
@@ -66,13 +70,29 @@ def _initialize_models() -> None:
         _summarizer = _initialize_summarizer()
 
 
+def _reset_models() -> None:
+    """Reset models (for testing purposes)."""
+    global _tokenizer, _summarizer
+    _tokenizer = None
+    _summarizer = None
+
+
 def _split_sentences(text: str) -> List[str]:
     """Split text into sentences using regex patterns."""
     if not text or not text.strip():
         return []
 
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if s.strip()]
+    # Remove trailing punctuation from each sentence
+    cleaned_sentences = []
+    for sentence in sentences:
+        if sentence.strip():
+            cleaned = sentence.strip()
+            # Remove trailing punctuation
+            cleaned = re.sub(r'[.!?]+$', '', cleaned)
+            if cleaned:  # Only add non-empty sentences
+                cleaned_sentences.append(cleaned)
+    return cleaned_sentences
 
 
 @performance_timer("chunk_text")

@@ -77,7 +77,9 @@ class TestChunkText:
     def setup_method(self):
         """Set up test fixtures."""
         self.mock_tokenizer = Mock()
-        self.mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+        self.mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
+        # Mock decode method to return the original text
+        self.mock_tokenizer.decode.return_value = "This is a test sentence. This is another test sentence."
     
     def test_basic_chunking(self):
         """Test basic text chunking."""
@@ -100,7 +102,12 @@ class TestChunkText:
         """Test chunking short text."""
         text = "Short text."
         
-        with patch('utils.enhance_summarize._tokenizer', self.mock_tokenizer):
+        # Create a mock that returns the input text when decoded
+        mock_tokenizer = Mock()
+        mock_tokenizer.encode.return_value = [1, 2, 3]
+        mock_tokenizer.decode.return_value = text
+        
+        with patch('utils.enhance_summarize._tokenizer', mock_tokenizer):
             result = _chunk_text(text)
             
             assert isinstance(result, list)
@@ -215,6 +222,9 @@ class TestInitializeModels:
     
     def test_model_initialization_failure(self):
         """Test model initialization failure."""
+        from utils.enhance_summarize import _reset_models
+        _reset_models()  # Reset the global models
+        
         with patch('utils.enhance_summarize.AutoTokenizer') as mock_tokenizer:
             mock_tokenizer.from_pretrained.side_effect = Exception("Model not found")
             
@@ -244,8 +254,8 @@ class TestEnhanceSummarizeText:
              patch('utils.enhance_summarize._tokenizer') as mock_tokenizer, \
              patch('utils.enhance_summarize._summarizer') as mock_summarizer:
             
-            # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+            # Mock tokenizer - return enough tokens to pass the length check (>= 10)
+            mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
             
             # Mock summarizer returning multiple sentences
             mock_summarizer.return_value = [{"summary_text": "First point. Second point. Third point."}]
@@ -293,7 +303,7 @@ class TestEnhanceSummarizeText:
              patch('utils.enhance_summarize._summarizer') as mock_summarizer:
             
             # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+            mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
             
             # Mock summarizer that fails
             mock_summarizer.side_effect = Exception("Summarization failed")
@@ -308,7 +318,7 @@ class TestEnhanceSummarizeText:
              patch('utils.enhance_summarize._summarizer') as mock_summarizer:
             
             # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+            mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
             
             # Mock summarizer returning empty results
             mock_summarizer.return_value = [{"summary_text": ""}]
@@ -324,8 +334,8 @@ class TestEnhanceSummarizeText:
             
             # Mock tokenizer
             mock_tokenizer.encode.side_effect = [
-                [1, 2, 3, 4, 5],  # First chunk
-                [1, 2, 3, 4, 5],  # Second chunk
+                list(range(15)),  # First chunk (15 tokens)
+                list(range(15)),  # Second chunk (15 tokens)
                 list(range(2000))  # Combined result (long)
             ]
             
@@ -344,7 +354,7 @@ class TestEnhanceSummarizeText:
              patch('utils.enhance_summarize._summarizer') as mock_summarizer:
             
             # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+            mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
             
             # Mock summarizer returning long summary
             long_summary = ". ".join([f"This is sentence {i}" for i in range(10)])
@@ -368,7 +378,7 @@ class TestEnhanceSummarizeIntegration:
              patch('utils.enhance_summarize._summarizer') as mock_summarizer:
             
             # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+            mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
             
             # Mock summarizer
             mock_summarizer.return_value = [{"summary_text": "Complete enhanced summary with multiple points. It covers all aspects thoroughly. The result is comprehensive and well-formatted."}]
@@ -388,7 +398,7 @@ class TestEnhanceSummarizeIntegration:
              patch('utils.enhance_summarize._summarizer') as mock_summarizer:
             
             # Mock tokenizer
-            mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
+            mock_tokenizer.encode.return_value = list(range(15))  # 15 tokens
             
             # Mock summarizer
             mock_summarizer.return_value = [{"summary_text": "Performance test summary."}]

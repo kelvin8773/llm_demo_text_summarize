@@ -139,6 +139,9 @@ def _load_pdf(file):
 
         return text
 
+    except ValueError as e:
+        # Re-raise ValueError exceptions (our own validation errors)
+        raise e
     except Exception as e:
         if "password" in str(e).lower():
             raise ValueError(
@@ -175,6 +178,12 @@ def _load_txt(file):
 
         return text.strip()
 
+    except ValueError as e:
+        # Re-raise ValueError exceptions (our own validation errors)
+        raise e
+    except UnicodeDecodeError as e:
+        # Wrap UnicodeDecodeError in a generic Exception
+        raise Exception(f"Error reading text file: {str(e)}")
     except Exception as e:
         raise Exception(f"Error reading text file: {str(e)}")
 

@@ -48,6 +48,12 @@ def _initialize_chinese_font() -> None:
             _zh_font = fm.FontProperties()
 
 
+def _reset_chinese_font() -> None:
+    """Reset Chinese font (for testing purposes)."""
+    global _zh_font
+    _zh_font = None
+
+
 # Chinese stopwords list (expandable)
 CHINESE_STOPWORDS = set(
     [
@@ -77,6 +83,7 @@ CHINESE_STOPWORDS = set(
         "而",
         "被",
         "从",
+        "正在",
         "但",
         "等",
         "很",
@@ -117,7 +124,7 @@ CHINESE_STOPWORDS = set(
 )
 
 # Domain-specific blocklist
-CUSTOM_BLOCKLIST = set(["公司", "数据", "业务", "使用", "系统", "服务", "应用", "软件"])
+CUSTOM_BLOCKLIST = set(["公司", "业务", "使用", "系统", "服务", "应用", "软件"])
 
 
 def _jieba_tokenizer(text: str) -> List[str]:
@@ -223,8 +230,11 @@ def plot_chinese_keywords(keywords: List[str]) -> plt.Figure:
         raise ValueError("Keywords list is empty")
 
     try:
-        # Initialize Chinese font
-        _initialize_chinese_font()
+        # Initialize Chinese font (with fallback)
+        try:
+            _initialize_chinese_font()
+        except Exception as e:
+            logger.warning(f"Font initialization failed, using default font: {e}")
 
         # Suppress matplotlib warnings
         with warnings.catch_warnings():

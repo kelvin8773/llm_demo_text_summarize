@@ -65,11 +65,16 @@ def _initialize_spacy() -> None:
             raise Exception(f"spaCy initialization failed: {e}")
 
 
+def _reset_spacy_model() -> None:
+    """Reset spaCy model (for testing purposes)."""
+    global _nlp
+    _nlp = None
+
+
 def _extract_noun_chunks(text: str) -> Set[str]:
     """Extract candidate noun chunks from text."""
-    _initialize_spacy()
-
     try:
+        _initialize_spacy()
         doc = _nlp(text)
         candidates = set()
 

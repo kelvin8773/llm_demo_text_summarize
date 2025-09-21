@@ -79,7 +79,7 @@ class TestJiebaTokenizer:
             
             # Blocklist words should be filtered out
             assert "公司" not in result
-            assert "数据" not in result
+            assert "数据" in result  # "数据" is no longer in blocklist
             assert "业务" not in result
             assert "使用" not in result
             assert "系统" not in result
@@ -276,6 +276,9 @@ class TestInitializeChineseFont:
     
     def test_chinese_font_download(self):
         """Test Chinese font download when not cached."""
+        from utils.chinese_insights import _reset_chinese_font
+        _reset_chinese_font()  # Reset the global font
+        
         with patch('utils.chinese_insights.os.path.exists') as mock_exists, \
              patch('utils.chinese_insights.requests.get') as mock_get, \
              patch('builtins.open', mock_open()), \
@@ -298,6 +301,9 @@ class TestInitializeChineseFont:
     
     def test_chinese_font_download_failure(self):
         """Test Chinese font download failure."""
+        from utils.chinese_insights import _reset_chinese_font
+        _reset_chinese_font()  # Reset the global font
+        
         with patch('utils.chinese_insights.os.path.exists') as mock_exists, \
              patch('utils.chinese_insights.requests.get') as mock_get, \
              patch('utils.chinese_insights.fm.FontProperties') as mock_font:

@@ -38,7 +38,7 @@ class TestExtractNounChunks:
             mock_chunk1 = Mock()
             mock_chunk1.text = "artificial intelligence system"
             mock_chunk2 = Mock()
-            mock_chunk2.text = "data"
+            mock_chunk2.text = "machine learning"
             
             mock_doc.noun_chunks = [mock_chunk1, mock_chunk2]
             mock_nlp.return_value = mock_doc
@@ -47,7 +47,7 @@ class TestExtractNounChunks:
             
             assert isinstance(result, set)
             assert "artificial intelligence system" in result
-            assert "data" in result
+            assert "machine learning" in result
     
     def test_empty_text_noun_chunks(self):
         """Test noun chunk extraction with empty text."""
@@ -204,7 +204,9 @@ class TestExtractKeywordsPhrases:
             
             # Mock vectorizer to return empty results
             mock_vectorizer_instance = Mock()
-            mock_vectorizer_instance.fit_transform.return_value = Mock()
+            mock_tfidf_matrix = Mock()
+            mock_tfidf_matrix.toarray.return_value = [[]]  # Empty array
+            mock_vectorizer_instance.fit_transform.return_value = mock_tfidf_matrix
             mock_vectorizer_instance.get_feature_names_out.return_value = []
             mock_vectorizer.return_value = mock_vectorizer_instance
             
@@ -310,6 +312,9 @@ class TestInitializeSpacy:
     
     def test_spacy_initialization_failure(self):
         """Test spaCy initialization failure."""
+        from utils.insights import _reset_spacy_model
+        _reset_spacy_model()  # Reset the global model
+        
         with patch('utils.insights.spacy.load') as mock_load:
             mock_load.side_effect = OSError("Model not found")
             
@@ -318,6 +323,9 @@ class TestInitializeSpacy:
     
     def test_spacy_initialization_general_error(self):
         """Test spaCy initialization with general error."""
+        from utils.insights import _reset_spacy_model
+        _reset_spacy_model()  # Reset the global model
+        
         with patch('utils.insights.spacy.load') as mock_load:
             mock_load.side_effect = Exception("General error")
             
