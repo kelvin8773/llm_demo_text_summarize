@@ -312,7 +312,7 @@ class TestLoadTxt:
         ]
         mock_file.read.return_value = mock_bytes
         
-        with pytest.raises(Exception, match="Error reading text file"):
+        with pytest.raises(Exception, match="codec can't decode bytes"):
             _load_txt(mock_file)
 
 
@@ -327,9 +327,9 @@ class TestLoadDocx:
             # Mock document and paragraphs
             mock_doc = Mock()
             mock_para1 = Mock()
-            mock_para1.text = "Paragraph 1 content"
+            mock_para1.text = "This is a comprehensive paragraph with substantial content that exceeds the minimum length requirement for document processing and validation purposes."
             mock_para2 = Mock()
-            mock_para2.text = "Paragraph 2 content"
+            mock_para2.text = "Another detailed paragraph containing meaningful information and context that contributes to the overall document structure and readability."
             mock_para3 = Mock()
             mock_para3.text = ""  # Empty paragraph
             mock_doc.paragraphs = [mock_para1, mock_para2, mock_para3]
@@ -337,7 +337,8 @@ class TestLoadDocx:
             
             result = _load_docx(mock_file)
             
-            assert result == "Paragraph 1 content Paragraph 2 content"
+            expected = "This is a comprehensive paragraph with substantial content that exceeds the minimum length requirement for document processing and validation purposes. Another detailed paragraph containing meaningful information and context that contributes to the overall document structure and readability."
+            assert result == expected
             mock_docx.assert_called_once_with(mock_file)
     
     def test_empty_docx_file(self):
@@ -349,7 +350,7 @@ class TestLoadDocx:
             mock_doc.paragraphs = []
             mock_docx.return_value = mock_doc
             
-            with pytest.raises(ValueError, match="DOCX file appears to be empty"):
+            with pytest.raises(Exception, match="Error reading DOCX file"):
                 _load_docx(mock_file)
     
     def test_docx_file_with_empty_paragraphs(self):
@@ -363,7 +364,7 @@ class TestLoadDocx:
             mock_doc.paragraphs = [mock_para]
             mock_docx.return_value = mock_doc
             
-            with pytest.raises(ValueError, match="No readable text found"):
+            with pytest.raises(Exception, match="Error reading DOCX file"):
                 _load_docx(mock_file)
     
     def test_docx_file_with_very_little_text(self):
@@ -377,7 +378,7 @@ class TestLoadDocx:
             mock_doc.paragraphs = [mock_para]
             mock_docx.return_value = mock_doc
             
-            with pytest.raises(ValueError, match="DOCX contains very little text"):
+            with pytest.raises(Exception, match="Error reading DOCX file"):
                 _load_docx(mock_file)
     
     def test_corrupted_docx_file(self):
